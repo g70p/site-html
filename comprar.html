@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Comprar | ResiGrip</title>
+  <meta name="description" content="Seleção de produtos ResiGrip e pedido de envio após pagamento." />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="page-buy">
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html#home" aria-label="RESIGRIP SPORTS PORTUGAL">
+        <span class="brand-top">RESIGRIP</span>
+        <span class="brand-sub">SPORTS PORTUGAL</span>
+      </a>
+
+      <button class="burger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav id="nav" class="nav" aria-label="Navegação principal">
+        <a href="index.html#produtos"><span class="nav-label">PRODUTOS</span><span class="nav-sub">Gamas</span></a>
+        <a href="index.html#aplicacoes"><span class="nav-label">APLICAÇÕES</span><span class="nav-sub">Desporto</span></a>
+        <a href="index.html#contacto"><span class="nav-label">CONTACTO</span><span class="nav-sub">Email</span></a>
+        <a class="nav-link highlight" href="comprar.html"><span class="nav-label">COMPRAR</span><span class="nav-sub">Pedido</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <div class="kicker">LOJA (PEDIDO)</div>
+          <h1 class="h2">Selecionar produtos</h1>
+          <p class="muted">Página de pedido. Após pagamento, envie a mensagem gerada com os dados de envio.</p>
+        </div>
+        <div class="head-line" aria-hidden="true"></div>
+      </div>
+
+      <section class="buy-grid" aria-label="Produtos">
+        <article class="card buy-item" data-sku="COLACO-PADEL" data-name="COLAÇO RG — Padel" data-price="PREÇO_A_DEFINIR">
+          <div class="card-media" style="background-image:url('/assets/images/COLAÇO_RG_PADEL.webp');" role="img" aria-label="COLAÇO RG Padel"></div>
+          <div class="card-body">
+            <h3 class="h3">PADEL</h3>
+            <p>Estabilidade na pressão e consistência no toque.</p>
+            <div class="buy-controls">
+              <label class="muted" for="q1">Quantidade</label>
+              <input id="q1" class="qty" type="number" min="0" value="0" inputmode="numeric" />
+            </div>
+          </div>
+        </article>
+
+        <article class="card buy-item" data-sku="COLACO-TENIS" data-name="COLAÇO RG — Ténis" data-price="PREÇO_A_DEFINIR">
+          <div class="card-media" style="background-image:url('/assets/images/COLAÇO_RG_Tenis.webp');" role="img" aria-label="COLAÇO RG Ténis"></div>
+          <div class="card-body">
+            <h3 class="h3">TÉNIS</h3>
+            <p>Controlo total no serviço. Aderência seca e limpa.</p>
+            <div class="buy-controls">
+              <label class="muted" for="q2">Quantidade</label>
+              <input id="q2" class="qty" type="number" min="0" value="0" inputmode="numeric" />
+            </div>
+          </div>
+        </article>
+
+        <article class="card buy-item" data-sku="COLACO-BADMINTON" data-name="COLAÇO RG — Badminton" data-price="PREÇO_A_DEFINIR">
+          <div class="card-media" style="background-image:url('/assets/images/COLAÇO_RG_BADMINTON.webp');" role="img" aria-label="COLAÇO RG Badminton"></div>
+          <div class="card-body">
+            <h3 class="h3">BADMINTON</h3>
+            <p>Ritmo rápido: segurança sem resíduos.</p>
+            <div class="buy-controls">
+              <label class="muted" for="q3">Quantidade</label>
+              <input id="q3" class="qty" type="number" min="0" value="0" inputmode="numeric" />
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="buy-form" aria-label="Dados do pedido">
+        <h2 class="h3">Dados para envio</h2>
+        <div class="grid-2">
+          <div>
+            <label class="label" for="nome">Nome</label>
+            <input id="nome" type="text" placeholder="Nome completo" />
+          </div>
+          <div>
+            <label class="label" for="email">Email</label>
+            <input id="email" type="email" placeholder="seu@email.com" />
+          </div>
+          <div>
+            <label class="label" for="morada">Morada</label>
+            <input id="morada" type="text" placeholder="Rua, n.º, andar" />
+          </div>
+          <div>
+            <label class="label" for="cidade">Código postal / Localidade</label>
+            <input id="cidade" type="text" placeholder="0000-000 Localidade" />
+          </div>
+          <div class="full">
+            <label class="label" for="notas">Notas (opcional)</label>
+            <textarea id="notas" rows="4" placeholder="Preferências, horário de entrega, etc."></textarea>
+          </div>
+        </div>
+
+        <div class="buy-actions">
+          <button class="btn btn-primary" id="gerar" type="button">Gerar mensagem para envio</button>
+          <a class="btn btn-ghost" href="index.html#contacto">Falar connosco</a>
+        </div>
+
+        <div class="panel" id="resultado" hidden>
+          <div class="panel-head">
+            <h3 class="h3">Mensagem</h3>
+            <button class="btn btn-ghost" id="copiar" type="button">Copiar</button>
+            <a class="btn btn-ghost" id="emailLink" href="#">Enviar por email</a>
+          </div>
+          <pre class="pre" id="texto"></pre>
+          <p class="muted">Após pagamento (PayPal / Transferência / MB Way — a definir), envie esta mensagem para confirmar o envio.</p>
+        </div>
+      </section>
+
+      <footer class="footer footer-buy">
+        <div class="footer-grid">
+          <div>
+            <div class="footer-title">RESIGRIP SPORTS PORTUGAL</div>
+            <p class="muted">Lisboa, Portugal</p>
+          </div>
+          <div>
+            <div class="footer-title">Informações úteis</div>
+            <ul class="footer-links">
+              <li><a href="index.html#como-usar">Como usar</a></li>
+              <li><a href="index.html#sobre">Sobre nós</a></li>
+              <li><a href="index.html#contacto">Contacto</a></li>
+              <li><a href="#" aria-disabled="true">Política de privacidade (a preencher)</a></li>
+              <li><a href="#" aria-disabled="true">Termos & condições (a preencher)</a></li>
+              <li><a href="#" aria-disabled="true">Envios & devoluções (a preencher)</a></li>
+            </ul>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+  <script src="comprar.js"></script>
+</body>
+</html>
