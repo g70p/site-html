@@ -256,3 +256,42 @@
   }
   requestAnimationFrame(step);
 })();
+
+(function () {
+  var overlay = document.getElementById('site-evolucao-overlay');
+  if (!overlay) {
+    return;
+  }
+
+  var storageKey = 'evolucaoOverlayClosedUntil';
+  var closeButton = overlay.querySelector('#evolucao-overlay-close');
+  var now = Date.now();
+  var closedUntil = 0;
+
+  try {
+    closedUntil = Number(window.localStorage.getItem(storageKey));
+  } catch (error) {
+    closedUntil = 0;
+  }
+
+  if (!Number.isNaN(closedUntil) && closedUntil > now) {
+    overlay.remove();
+    return;
+  }
+
+  if (!closeButton) {
+    return;
+  }
+
+  closeButton.addEventListener('click', function () {
+    var nextCloseUntil = Date.now() + (24 * 60 * 60 * 1000);
+
+    try {
+      window.localStorage.setItem(storageKey, String(nextCloseUntil));
+    } catch (error) {
+      // Sem persistência disponível (modo privado/storage bloqueado).
+    }
+
+    overlay.remove();
+  });
+})();
