@@ -256,3 +256,30 @@
   }
   requestAnimationFrame(step);
 })();
+
+(function () {
+  var overlay = document.getElementById('site-evolucao-overlay');
+  if (!overlay) {
+    return;
+  }
+
+  var storageKey = 'evolucaoOverlayClosedUntil';
+  var closeButton = overlay.querySelector('#evolucao-overlay-close');
+  var now = Date.now();
+  var closedUntil = Number(window.localStorage.getItem(storageKey));
+
+  if (!Number.isNaN(closedUntil) && closedUntil > now) {
+    overlay.remove();
+    return;
+  }
+
+  if (!closeButton) {
+    return;
+  }
+
+  closeButton.addEventListener('click', function () {
+    var nextCloseUntil = Date.now() + (24 * 60 * 60 * 1000);
+    window.localStorage.setItem(storageKey, String(nextCloseUntil));
+    overlay.remove();
+  });
+})();
