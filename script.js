@@ -136,6 +136,12 @@
     });
   });
 
+  // Botão de voltar ao topo
+  const scrollTopBtn = qs('#scrollTop');
+  scrollTopBtn?.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
   // Carousel (produtos)
   qsa('.carousel').forEach((wrap) => {
     const track = qs('.carousel-track', wrap);
