@@ -266,13 +266,7 @@
   var storageKey = 'evolucaoOverlayClosedUntil';
   var closeButton = overlay.querySelector('#evolucao-overlay-close');
   var now = Date.now();
-  var closedUntil = 0;
-
-  try {
-    closedUntil = Number(window.localStorage.getItem(storageKey));
-  } catch (error) {
-    closedUntil = 0;
-  }
+  var closedUntil = Number(window.localStorage.getItem(storageKey));
 
   if (!Number.isNaN(closedUntil) && closedUntil > now) {
     overlay.remove();
@@ -285,13 +279,7 @@
 
   closeButton.addEventListener('click', function () {
     var nextCloseUntil = Date.now() + (24 * 60 * 60 * 1000);
-
-    try {
-      window.localStorage.setItem(storageKey, String(nextCloseUntil));
-    } catch (error) {
-      // Sem persistência disponível (modo privado/storage bloqueado).
-    }
-
+    window.localStorage.setItem(storageKey, String(nextCloseUntil));
     overlay.remove();
   });
 })();
