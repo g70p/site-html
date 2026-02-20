@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gama de Tack Colaço | ResiGrip</title>
-  <meta name="description" content="Informações e Seleção de produtos ResiGrip e pedido de envio após pagamento." />
+  <title>Toda a gama de tacks e produtos | ResiGrip</title>
+  <meta name="description" content="Toda a gama de tacks e produtos ResiGrip. Selecione quantidade e gere automaticamente a mensagem de encomenda." />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -25,8 +25,7 @@
     </div>
   </div>
 
-
-  <header class="site-header">
+  <header class="site-header" id="top">
     <div class="container header-inner">
       <a class="brand" href="index.html#home" aria-label="RESIGRIP SPORTS PORTUGAL">
         <span class="brand-top">RESIGRIP</span>
@@ -38,10 +37,13 @@
       </button>
 
       <nav id="nav" class="nav" aria-label="Navegação principal">
-        <a href="index.html#produtos"><span class="nav-label">PRODUTOS</span><span class="nav-sub">Gamas</span></a>
+        <a href="index.html#home"><span class="nav-label">INÍCIO</span><span class="nav-sub">Home</span></a>
+        <a href="index.html#produtos"><span class="nav-label">PRODUTOS</span><span class="nav-sub">Pós / Rosin Bag</span></a>
         <a href="index.html#aplicacoes"><span class="nav-label">APLICAÇÕES</span><span class="nav-sub">Desporto</span></a>
+        <a href="index.html#como-usar"><span class="nav-label">COMO USAR</span><span class="nav-sub">Guia</span></a>
+        <a href="index.html#sobre"><span class="nav-label">SOBRE</span><span class="nav-sub">PT pine</span></a>
         <a href="index.html#contacto"><span class="nav-label">CONTACTO</span><span class="nav-sub">Email</span></a>
-        <a class="nav-link highlight" href="comprar.html"><span class="nav-label">SOLUÇÕES</span><span class="nav-sub">Detalhes e Pedidos</span></a>
+        <a class="nav-link highlight" href="comprar.html"><span class="nav-label">TODA A GAMA</span><span class="nav-sub">Tacks e produtos</span></a>
       </nav>
     </div>
   </header>
@@ -50,115 +52,38 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <div class="kicker">SOLUÇÕES, INFORMAÇÂO TÉCNICA e PEDIDOS</div>
-          <h1 class="h2">Selecionar produtos para detalhes</h1>
-          <p class="muted">Selecionar quantidade. Após pagamento, envie a mensagem gerada com os dados de envio.</p>
+          <div class="kicker">TODA A GAMA</div>
+          <h1 class="h2">Toda a gama de tacks e produtos</h1>
+          <p class="muted">Selecione quantidade a encomendar e gere a mensagem automaticamente para o formulário de contacto.</p>
         </div>
         <div class="head-line" aria-hidden="true"></div>
       </div>
 
-      <section class="buy-grid" aria-label="Produtos">
-        <article class="card buy-item" data-sku="COLAÇO RG PACK3 BLEND" data-name="BLEND 3 WWWG20" data-price="8.5€">
-          <div class="card-media" style="background-image:url('/assets/images/keep calm and im learning to use a camera.webp');" role="img" aria-label="COLAÇO RG — PACK3 - WWG"></div>
-          <div class="card-body">
-            <h3 class="h3">2BLENDS Water Glass 4</h3>
-            <p>Estabilidade na pressão e consistência no toque.Nível 7. +- 5,4g</p>
-            <div class="buy-controls">
-              <label class="muted" for="q1">Quantidade</label>
-              <input id="q1" class="qty" type="number" min="0" value="0" inputmode="numeric" />
-            </div>
-          </div>
-        </article>
-
-        <article class="card buy-item" data-sku="COLAÇO RG PACK5 DRY" data-name="DRY 5 WW20" data-price="13€">
-          <div class="card-media" style="background-image:url('/assets/images/keep calm and im learning to use a camera.webp');" role="img" aria-label="COLAÇO RG — PACK5 - WW"></div>
-          <div class="card-body">
-            <h3 class="h3">DRY 3</h3>
-            <p>Aderência seca e limpa. Nível 3. +- 9g</p>
-            <div class="buy-controls">
-              <label class="muted" for="q2">Quantidade</label>
-              <input id="q2" class="qty" type="number" min="0" value="0" inputmode="numeric" />
-            </div>
-          </div>
-        </article>
-
-        <article class="card buy-item" data-sku="COLAÇO RG PACK3 PURE-POWER" data-name="PURE-POWER 3 X20_WG80" data-price="8,5">
-          <div class="card-media" style="background-image:url('/assets/images/keep calm and im learning to use a camera.webp');" role="img" aria-label="COLAÇO RG — PACK3  - X_WG"></div>
-          <div class="card-body">
-            <h3 class="h3">PURE-POWER 4</h3>
-            <p>Ritmo rápido. Nível 9. +- 5,4g</p>
-            <div class="buy-controls">
-              <label class="muted" for="q3">Quantidade</label>
-              <input id="q3" class="qty" type="number" min="0" value="0" inputmode="numeric" />
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section class="buy-form" aria-label="Dados do pedido">
-        <h2 class="h3">Dados para envio</h2>
-        <div class="grid-2">
-          <div>
-            <label class="label" for="nome">Nome</label>
-            <input id="nome" type="text" placeholder="Nome completo" />
-          </div>
-          <div>
-            <label class="label" for="email">Email</label>
-            <input id="email" type="email" placeholder="seu@email.com" />
-          </div>
-          <div>
-            <label class="label" for="morada">Morada</label>
-            <input id="morada" type="text" placeholder="Rua, n.º, andar" />
-          </div>
-          <div>
-            <label class="label" for="cidade">Código postal / Localidade</label>
-            <input id="cidade" type="text" placeholder="0000-000 Localidade" />
-          </div>
-          <div class="full">
-            <label class="label" for="notas">Notas (opcional)</label>
-            <textarea id="notas" rows="4" placeholder="Preferências, horário de entrega, etc."></textarea>
-          </div>
-        </div>
-
-        <div class="buy-actions">
-          <button class="btn btn-primary" id="gerar" type="button">Gerar mensagem para envio</button>
-          <a class="btn btn-ghost" href="index.html#contacto">Falar connosco</a>
-        </div>
-
-        <div class="panel" id="resultado" hidden>
-          <div class="panel-head">
-            <h3 class="h3">Mensagem</h3>
-            <button class="btn btn-ghost" id="copiar" type="button">Copiar</button>
-            <a class="btn btn-ghost" id="emailLink" href="#">Enviar por email</a>
-          </div>
-          <pre class="pre" id="texto"></pre>
-          <p class="muted">Após pagamento (PayPal / Transferência / MB Way — a definir), envie esta mensagem para confirmar o envio.</p>
-        </div>
-      </section>    
-       <footer class="site-footer">
-        <div class="container footer-inner">
-         <div class="footer-left">
-         <div class="brand-mini">RESIGRIP SPORTS PORTUGAL</div>
-         <div class="muted">© <span id="year">2026</span> — Todos os direitos reservados.</div>
-        </div>
-
-        <div class="footer-links">
-         <a href="#como-usar">Como usar</a>
-         <a href="#sobre">Sobre nós</a>
-         <a href="#contacto">Contacto</a>
-         <a href="#" aria-disabled="true">Política de privacidade</a>
-         <a href="#" aria-disabled="true">Termos &amp; condições</a>
-         <a href="#" aria-disabled="true">Envios &amp; devoluções</a>
-        </div>
-      </div>
-    </footer>
-      
+      <section class="buy-grid" id="buyGrid" aria-label="Produtos"></section>
     </div>
   </main>
 
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-left">
+        <div class="brand-mini">RESIGRIP SPORTS PORTUGAL</div>
+        <div class="muted">© <span id="year"></span> — Todos os direitos reservados.</div>
+      </div>
+
+      <div class="footer-links">
+        <a href="index.html#como-usar">Como usar</a>
+        <a href="index.html#sobre">Sobre nós</a>
+        <a href="index.html#contacto">Contacto</a>
+        <a href="#" aria-disabled="true">Política de privacidade</a>
+        <a href="#" aria-disabled="true">Termos &amp; condições</a>
+        <a href="#" aria-disabled="true">Envios &amp; devoluções</a>
+      </div>
+    </div>
+  </footer>
+
   <button class="scroll-top" id="scrollTop" type="button" aria-label="Voltar ao topo">↑</button>
 
-  <script src="script.js"></script>
-  <script src="comprar.js"></script>
+  <script src="script.js" defer></script>
+  <script src="comprar.js" defer></script>
 </body>
 </html>
