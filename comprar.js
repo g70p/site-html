@@ -1,103 +1,86 @@
 (() => {
   'use strict';
 
-  const qsa = (sel, root=document) => Array.from(root.querySelectorAll(sel));
-  const qs = (sel, root=document) => root.querySelector(sel);
+  const PRODUCTS = Array.isArray(window.RESIGRIP_PRODUCTS) ? window.RESIGRIP_PRODUCTS : [];
+  const CART_KEY = 'resigrip_cart';
 
-  const items = qsa('.buy-item');
-  const btn = qs('#gerar');
-  const out = qs('#resultado');
-  const pre = qs('#texto');
-  const copyBtn = qs('#copiar');
-  const emailLink = qs('#emailLink');
+  const qs = (sel, root = document) => root.querySelector(sel);
 
-  const fields = {
-    nome: qs('#nome'),
-    email: qs('#email'),
-    morada: qs('#morada'),
-    cidade: qs('#cidade'),
-    notas: qs('#notas')
+  const readCart = () => {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(CART_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   };
 
-  function getCart(){
-    return items.map((it) => {
-      const qty = Number(qs('.qty', it)?.value || 0);
-      return {
-        sku: it.dataset.sku,
-        name: it.dataset.name,
-        price: it.dataset.price,
-        qty
-      };
-    }).filter(i => i.qty > 0);
-  }
+  const enqueueProduct = (id, qty) => {
+    const amount = Number(qty);
+    if (!id || !Number.isFinite(amount) || amount <= 0) return;
+    const rows = readCart();
+    rows.push({ id, qty: amount });
+    window.localStorage.setItem(CART_KEY, JSON.stringify(rows));
+  };
 
-  function buildMessage(cart){
-    const nome = (fields.nome.value || '').trim();
-    const email = (fields.email.value || '').trim();
-    const morada = (fields.morada.value || '').trim();
-    const cidade = (fields.cidade.value || '').trim();
-    const notas = (fields.notas.value || '').trim();
+  const renderBuyGrid = () => {
+    const grid = qs('#buyGrid');
+    if (!grid || !PRODUCTS.length) return;
 
-    const lines = [];
-    lines.push('PEDIDO RESIGRIP — CONFIRMAÇÃO DE ENVIO');
-    lines.push('');
-    lines.push('1) Dados do cliente');
-    lines.push(`- Nome: ${nome || '[PREENCHER]'}`);
-    lines.push(`- Email: ${email || '[PREENCHER]'}`);
-    lines.push(`- Morada: ${morada || '[PREENCHER]'}`);
-    lines.push(`- Código postal / Localidade: ${cidade || '[PREENCHER]'}`);
-    lines.push('');
-    lines.push('2) Produtos');
-    if (!cart.length){
-      lines.push('- [SEM PRODUTOS SELECIONADOS]');
-    } else {
-      cart.forEach((i) => {
-        lines.push(`- ${i.qty}x ${i.name} (SKU: ${i.sku}) — ${i.price}`);
-      });
+    grid.innerHTML = PRODUCTS.map((product) => `
+      <article class="card buy-item" id="prod-${product.id}" data-product-id="${product.id}">
+        <div class="card-media buy-media" style="background-image:url('${product.image}');" role="img" aria-label="${product.title}"></div>
+        <div class="card-body buy-card-body">
+          <h3 class="h3">${product.shortTitle || product.title}</h3>
+          <div class="buy-controls">
+            <label class="muted" for="q-${product.id}">Quantidade a encomendar</label>
+            <input id="q-${product.id}" class="qty" type="number" min="1" value="1" inputmode="numeric" />
+          </div>
+        </div>
+        <p class="card-desc-out">${product.buyDescription || product.description}</p>
+        <div class="range-actions buy-actions-inline">
+          <button class="btn btn-primary btn-sm" type="button" data-action="generate-order" data-product="${product.id}">Gerar Mensagem para Encomenda</button>
+          <a class="btn btn-ghost btn-sm" href="index.html#contacto">Ir para contacto</a>
+        </div>
+      </article>
+    `).join('');
+  };
+
+  const getProductIdFromUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = params.get('produto');
+    if (fromQuery) return fromQuery;
+
+    const hash = window.location.hash || '';
+    if (hash.startsWith('#prod-')) {
+      return hash.replace('#prod-', '');
     }
-    lines.push('');
-    lines.push('3) Pagamento');
-    lines.push('- Método: [PayPal / Transferência / MB Way]');
-    lines.push('- Referência/ID do pagamento: [PREENCHER]');
-    lines.push('');
-    lines.push('4) Notas');
-    lines.push(notas ? `- ${notas}` : '- (sem notas)');
-    lines.push('');
-    lines.push('Obrigado.');
+    return '';
+  };
 
-    return lines.join('\n');
-  }
+  const highlightProduct = (id) => {
+    if (!id) return;
+    const card = qs(`#prod-${id}`);
+    if (!card) return;
+    card.classList.add('product-highlight');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => card.classList.remove('product-highlight'), 2000);
+  };
 
-  function setMailto(message){
-    const to = 'resigrip.portugal@gmail.com';
-    const subject = encodeURIComponent('Pedido ResiGrip — Confirmação de envio');
-    const body = encodeURIComponent(message);
-    emailLink.href = `mailto:${to}?subject=${subject}&body=${body}`;
-  }
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
 
-  btn?.addEventListener('click', () => {
-    const cart = getCart();
-    const msg = buildMessage(cart);
-    pre.textContent = msg;
-    setMailto(msg);
-    out.hidden = false;
-    out.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const button = target.closest('[data-action="generate-order"]');
+    if (!button) return;
+
+    const id = button.getAttribute('data-product') || '';
+    const card = button.closest('[data-product-id]');
+    const qty = Number(qs('.qty', card || document)?.value || 1);
+    enqueueProduct(id, qty);
+    window.location.href = 'index.html#contacto';
   });
 
-  copyBtn?.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(pre.textContent || '');
-      copyBtn.textContent = 'Copiado';
-      setTimeout(() => (copyBtn.textContent = 'Copiar'), 900);
-    } catch {
-      // fallback: selecionar texto
-      const r = document.createRange();
-      r.selectNodeContents(pre);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(r);
-      document.execCommand('copy');
-      sel.removeAllRanges();
-    }
-  });
+  renderBuyGrid();
+  highlightProduct(getProductIdFromUrl());
 })();

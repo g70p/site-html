@@ -124,8 +124,8 @@
         </p>
 
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#produtos">ENCOMENDAR</a>
-          <a class="btn btn-ghost" href="#contacto">Conhecer Gama</a>
+          <a class="btn btn-primary" href="#toda-a-gama">ENCOMENDAR</a>
+          <a class="btn btn-ghost" href="comprar.html">TODOS OS TACKS E PÓS</a>
         </div>
 
         <div class="hero-note">
@@ -137,6 +137,28 @@
       <div class="hero-gradients" aria-hidden="true">
         <div class="glow glow-1"></div>
         <div class="glow glow-2"></div>
+      </div>
+    </section>
+
+
+    <!-- TODA A GAMA -->
+    <section id="toda-a-gama" class="section full-range">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <div class="kicker">TODA A GAMA</div>
+            <h2 class="h2">Toda a gama de tacks e produtos</h2>
+          </div>
+          <div class="head-line" aria-hidden="true"></div>
+        </div>
+
+        <div class="carousel" data-carousel="toda-a-gama">
+          <button class="carousel-btn prev" type="button" aria-label="Anterior">‹</button>
+          <div class="carousel-track cards" id="todaGamaTrack">
+            <!-- Renderizado via script.js -->
+          </div>
+          <button class="carousel-btn next" type="button" aria-label="Seguinte">›</button>
+        </div>
       </div>
     </section>
 
@@ -153,40 +175,12 @@
 
         <div class="carousel" data-carousel="produtos">
           <button class="carousel-btn prev" type="button" aria-label="Anterior">‹</button>
-          <div class="cards carousel-track">
-<article class="card">
-            <div class="card-media" role="img" aria-label="Blend" style="background-image:url('/assets/images/keep calm and im learning to use a camera.webp');"></div>
-            <div class="card-body">
-              <h3 class="h3">DRY_BLEND 80/20</h3>
-              <p>Tack para mãos ativas: estabilidade na pressão, consistência no toque. TACK_COLAÇO RG_PACK3u - DRY_BLEND WWG_80/20 Nível_7. +-5,4g</p>
-              <a class="card-link" href="#contacto">Detalhes <span aria-hidden="true">›</span></a>
-              <a class="card-link buy" href="comprar.html">Comprar <span aria-hidden="true">›</span></a>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-media" role="img" aria-label="Dry" style="background-image:url('/assets/images/keep calm and im learning to use a camera.webp');"></div>
-            <div class="card-body">
-              <h3 class="h3">DRY 80/20</h3>
-              <p>Controlo total. Aderência seca e limpa. TACK_COLAÇO RG_PACK5u - DRY WW_80/20 Nível_5. +-9g</p>
-              <a class="card-link" href="#contacto">Detalhes <span aria-hidden="true">›</span></a>
-              <a class="card-link buy" href="comprar.html">Comprar <span aria-hidden="true">›</span></a>
-            </div>
-          </article>
-
-          <article class="card">
-            <div class="card-media" role="img" aria-label="Power" style="background-image:url('/assets/images/keep calm and im learning to use a camera.webp');"></div>
-            <div class="card-body">
-              <h3 class="h3">DRY_PURE-POWER</h3>
-              <p>Tack moderno para ritmo rápido: segurança sem resíduos. TACK_COLAÇO RG_PACK3u - PURE-POWER XWW_PURE Nível_9,5 +-5,4g</p>
-              <a class="card-link" href="#contacto">Detalhes <span aria-hidden="true">›</span></a>
-              <a class="card-link buy" href="comprar.html">Comprar <span aria-hidden="true">›</span></a>
-            </div>
-          </article>
+          <div class="cards carousel-track featured-track" id="featuredTrack">
+            <!-- Renderizado via script.js -->
           </div>
           <button class="carousel-btn next" type="button" aria-label="Seguinte">›</button>
         </div>
-            <a href="comprar.html">Conhecer toda a gama</a>
+            <a class="btn btn-ghost" href="comprar.html">Toda a gama de tacks e produtos</a>
       </div>
     </section>
 
@@ -243,15 +237,27 @@
 
     <!-- SOBRE -->
     <section id="sobre" class="section about">
-      <div class="container center">
-        <div class="kicker">ORIGEM PORTUGUESA</div>
+      <div class="container about-layout">
+        <div>
+          <div class="kicker">ORIGEM PORTUGUESA</div>
         <h2 class="h2">SOBRE NÓS</h2>
         <p class="lead max">
           A essência da floresta Portuguesa transformada em performance. A RESIGRIP SPORTS PORTUGAL dedica-se a resolver
           o problema da falta de aderência nas mãos em atividades que exijam uma adesão firme da(s) mão(s), sem que cole(m), ao equipamento desportivo, através de fórmulas 
           artesanais e sustentáveis.
         </p>
-        <div class="bar" aria-hidden="true"></div>
+          <div class="bar" aria-hidden="true"></div>
+        </div>
+
+        <div class="about-banner" role="region" aria-label="Banner ResiGrip">
+          <div class="about-banner-media">
+            <img src="/assets/images/keep calm and im learning to use a camera.webp" alt="Produto ResiGrip" loading="lazy" />
+          </div>
+          <div class="about-banner-copy">
+            <h3>Produção artesanal em evolução contínua</h3>
+            <p>Toda a gama de tacks e pós mantém foco em controlo técnico, aderência seca e consistência competitiva.</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -276,11 +282,59 @@
               <div class="error" data-for="email"></div>
             </div>
 
+
+            <button class="btn btn-ghost order-toggle" id="orderDataToggle" type="button" aria-expanded="false" aria-controls="orderDataPanel">Gerar/Editar dados para encomenda</button>
+
+            <div class="order-data-panel" id="orderDataPanel" hidden>
+              <h3 class="h3">Dados para encomendas</h3>
+              <div class="grid-2">
+                <div>
+                  <label class="label" for="orderAddress">Morada</label>
+                  <input id="orderAddress" type="text" placeholder="Rua, n.º, andar" />
+                </div>
+                <div>
+                  <label class="label" for="orderPostal">Código postal / Localidade</label>
+                  <input id="orderPostal" type="text" placeholder="0000-000 Localidade" />
+                </div>
+                <div class="full">
+                  <label class="label" for="orderNotes">Notas (opcional)</label>
+                  <textarea id="orderNotes" rows="3" placeholder="Notas sobre entrega ou encomenda"></textarea>
+                </div>
+                <div>
+                  <label class="label" for="orderPayment">Meio de pagamento</label>
+                  <select id="orderPayment">
+                    <option value="">[PREENCHER]</option>
+                    <option>PayPal</option>
+                    <option>Transferência</option>
+                    <option>MB Way</option>
+                    <option>Outro</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="label" for="orderProof">Upload comprovativo de pagamento</label>
+                  <input id="orderProof" name="payment_proof" type="file" />
+                </div>
+              </div>
+
+              <button class="btn btn-primary btn-sm" id="insertOrderData" type="button">Inserir dados na mensagem</button>
+
+              <div class="add-products-mini">
+                <h4>Adicionar produtos</h4>
+                <div class="mini-row">
+                  <select id="quickProductSelect"></select>
+                  <input id="quickProductQty" type="number" min="1" value="1" inputmode="numeric" />
+                  <button class="btn btn-ghost btn-sm" id="quickAddProduct" type="button">+ Adicionar</button>
+                </div>
+              </div>
+            </div>
+
             <div class="field">
               <label for="message">MENSAGEM*</label>
               <textarea id="message" name="message" rows="10" placeholder="Experiência, dúvida, modalidade onde sente necessidade de maior aderência, encomendas, pedido de apresentação (clubes) ..." required></textarea>
               <div class="error" data-for="message"></div>
             </div>
+
+            <p class="order-disclaimer"><strong>Isenção: não nos responsabilizamos por atrasos ou falhas de envio decorrentes de dados incompletos/incorrectos ou ausência de comprovativo de pagamento.</strong></p>
 
             <button class="btn btn-primary" type="submit">
               <span class="btn-text">Enviar</span>
