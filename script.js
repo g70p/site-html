@@ -283,3 +283,236 @@
     overlay.remove();
   });
 })();
+
+(() => {
+  'use strict';
+
+  const PRODUCTS = [
+    {
+      id: 'COLACO_RG_PACK3_BLEND',
+      title: 'DRY_BLEND 80/20',
+      shortTitle: '2BLENDS Water Glass 4',
+      description: 'Tack para mãos ativas: estabilidade na pressão, consistência no toque. TACK_COLAÇO RG_PACK3u - DRY_BLEND WWG_80/20 Nível_7. +-5,4g',
+      buyDescription: 'Estabilidade na pressão e consistência no toque. Nível 7. +- 5,4g',
+      sku: 'COLAÇO RG PACK3 BLEND',
+      image: '/assets/images/keep calm and im learning to use a camera.webp'
+    },
+    {
+      id: 'COLACO_RG_PACK5_DRY',
+      title: 'DRY 80/20',
+      shortTitle: 'DRY 3',
+      description: 'Controlo total. Aderência seca e limpa. TACK_COLAÇO RG_PACK5u - DRY WW_80/20 Nível_5. +-9g',
+      buyDescription: 'Aderência seca e limpa. Nível 3. +- 9g',
+      sku: 'COLAÇO RG PACK5 DRY',
+      image: '/assets/images/keep calm and im learning to use a camera.webp'
+    },
+    {
+      id: 'COLACO_RG_PACK3_PURE_POWER',
+      title: 'DRY_PURE-POWER',
+      shortTitle: 'PURE-POWER 4',
+      description: 'Tack moderno para ritmo rápido: segurança sem resíduos. TACK_COLAÇO RG_PACK3u - PURE-POWER XWW_PURE Nível_9,5 +-5,4g',
+      buyDescription: 'Ritmo rápido e segurança sem resíduos. Nível 9. +- 5,4g',
+      sku: 'COLAÇO RG PACK3 PURE-POWER',
+      image: '/assets/images/keep calm and im learning to use a camera.webp'
+    }
+  ];
+
+  window.RESIGRIP_PRODUCTS = PRODUCTS;
+
+  const CART_KEY = 'resigrip_cart';
+  const CHECKOUT_NOTE_KEY = 'resigrip_checkout_note';
+
+  const qs = (sel, root = document) => root.querySelector(sel);
+
+  const readCart = () => {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(CART_KEY) || '[]');
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const writeCart = (rows) => {
+    window.localStorage.setItem(CART_KEY, JSON.stringify(rows));
+  };
+
+  const enqueueProduct = (id, qty) => {
+    const amount = Number(qty);
+    if (!id || !Number.isFinite(amount) || amount <= 0) return;
+    const cart = readCart();
+    cart.push({ id, qty: amount });
+    writeCart(cart);
+  };
+
+  const appendMessage = (text) => {
+    const message = qs('#message');
+    if (!message || !text.trim()) return;
+    const base = message.value.trim();
+    message.value = base ? `${base}\n\n---\n${text}` : text;
+  };
+
+  const buildProductsLines = (rows) => {
+    const list = rows
+      .map((row) => {
+        const product = PRODUCTS.find((item) => item.id === row.id);
+        if (!product) return '';
+        return `- Produto: ${product.title} | Quantidade: ${row.qty}`;
+      })
+      .filter(Boolean);
+
+    if (!list.length) return '';
+
+    return [
+      'Pedido de encomenda RESIGRIP',
+      ...list,
+      'Anexe comprovativo de pagamento fazendo o upload do ficheiro.',
+      'Método de pagamento: [PREENCHER]'
+    ].join('\n');
+  };
+
+  const processCartIntoMessage = () => {
+    const rows = readCart();
+    if (!rows.length) return;
+    const block = buildProductsLines(rows);
+    appendMessage(block);
+    writeCart([]);
+  };
+
+  const renderTodaAGama = () => {
+    const track = qs('#todaGamaTrack');
+    if (!track) return;
+    track.innerHTML = PRODUCTS.map((product) => `
+      <article class="card range-card" data-product-id="${product.id}">
+        <div class="card-media" role="img" aria-label="${product.title}" style="background-image:url('${product.image}');"></div>
+        <div class="card-body">
+          <span class="badge">Novidade</span>
+          <h3 class="h3">${product.title}</h3>
+          <p>${product.description}</p>
+          <div class="buy-controls">
+            <label class="muted" for="qty-${product.id}">Quantidade a encomendar</label>
+            <input id="qty-${product.id}" class="qty" type="number" min="1" value="1" inputmode="numeric" />
+          </div>
+          <div class="range-actions">
+            <button class="btn btn-primary btn-sm" type="button" data-action="select-product" data-product="${product.id}">Selecionar este produto</button>
+            <a class="btn btn-ghost btn-sm" href="comprar.html?produto=${product.id}">Detalhes</a>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  };
+
+  const renderFeatured = () => {
+    const track = qs('#featuredTrack');
+    if (!track) return;
+    track.innerHTML = PRODUCTS.map((product) => `
+      <article class="card featured-card" data-product-id="${product.id}">
+        <div class="card-media" role="img" aria-label="${product.title}" style="background-image:url('${product.image}');"></div>
+        <div class="card-body">
+          <span class="badge">Novidade</span>
+          <h3 class="h3">${product.title}</h3>
+          <div class="range-actions">
+            <a class="btn btn-ghost btn-sm" href="comprar.html?produto=${product.id}">Detalhes</a>
+            <button class="btn btn-primary btn-sm" type="button" data-action="feature-order" data-product="${product.id}">Encomendar</button>
+          </div>
+        </div>
+        <p class="card-desc-out">${product.description}</p>
+      </article>
+    `).join('');
+  };
+
+  const fillQuickProductSelect = () => {
+    const select = qs('#quickProductSelect');
+    if (!select) return;
+    select.innerHTML = PRODUCTS.map((product) => `<option value="${product.id}">${product.title}</option>`).join('');
+  };
+
+  const goToContact = () => {
+    window.location.href = 'index.html#contacto';
+  };
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+
+    const selectButton = target.closest('[data-action="select-product"]');
+    if (selectButton) {
+      const id = selectButton.getAttribute('data-product') || '';
+      const card = selectButton.closest('[data-product-id]');
+      const qtyEl = card ? qs('.qty', card) : null;
+      const qty = Number(qtyEl?.value || 1);
+      enqueueProduct(id, qty);
+      goToContact();
+      return;
+    }
+
+    const featureOrder = target.closest('[data-action="feature-order"]');
+    if (featureOrder) {
+      const id = featureOrder.getAttribute('data-product') || '';
+      enqueueProduct(id, 1);
+      const section = qs('#contacto');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.replaceState({}, '', '#contacto');
+        processCartIntoMessage();
+      }
+    }
+  });
+
+  const initOrderPanel = () => {
+    const toggle = qs('#orderDataToggle');
+    const panel = qs('#orderDataPanel');
+    const insertDataBtn = qs('#insertOrderData');
+    const quickAddBtn = qs('#quickAddProduct');
+
+    if (toggle && panel) {
+      toggle.addEventListener('click', () => {
+        const opening = panel.hidden;
+        panel.hidden = !opening;
+        toggle.setAttribute('aria-expanded', String(opening));
+      });
+    }
+
+    insertDataBtn?.addEventListener('click', () => {
+      const name = (qs('#name')?.value || '').trim() || '[PREENCHER]';
+      const address = (qs('#orderAddress')?.value || '').trim() || '[PREENCHER]';
+      const postal = (qs('#orderPostal')?.value || '').trim() || '[PREENCHER]';
+      const notes = (qs('#orderNotes')?.value || '').trim() || '(sem notas)';
+      const payment = (qs('#orderPayment')?.value || '').trim() || '[PREENCHER]';
+
+      const lines = [
+        'Dados para encomenda',
+        `- Nome: ${name}`,
+        `- Morada: ${address}`,
+        `- Código postal / Localidade: ${postal}`,
+        `- Notas: ${notes}`,
+        `- Método de pagamento: ${payment}`,
+        'Anexe comprovativo de pagamento fazendo o upload do ficheiro.'
+      ].join('\n');
+
+      window.localStorage.setItem(CHECKOUT_NOTE_KEY, lines);
+      appendMessage(lines);
+    });
+
+    quickAddBtn?.addEventListener('click', () => {
+      const productId = qs('#quickProductSelect')?.value || '';
+      const qty = Number(qs('#quickProductQty')?.value || 1);
+      enqueueProduct(productId, qty);
+      processCartIntoMessage();
+    });
+  };
+
+  renderTodaAGama();
+  renderFeatured();
+  fillQuickProductSelect();
+  initOrderPanel();
+
+  const shouldProcess = window.location.hash === '#contacto' || readCart().length > 0;
+  if (shouldProcess) processCartIntoMessage();
+
+  window.addEventListener('hashchange', () => {
+    if (window.location.hash === '#contacto') {
+      processCartIntoMessage();
+    }
+  });
+})();
