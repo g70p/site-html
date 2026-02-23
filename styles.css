@@ -14,7 +14,7 @@
   --r16:16px;
   --r24:24px;
   --r32:32px;
-  --max:1100px;
+  /*! --max:1100px; */
 }
 
 *{ box-sizing:border-box; }
