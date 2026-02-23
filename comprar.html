@@ -43,8 +43,42 @@
         <a href="#" aria-label="WhatsApp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 0 0-6.9 12l-1 4 4.1-1A8 8 0 1 0 12 4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 9.5c.2-.5.4-.5.6-.5h.4c.2 0 .5 0 .6.4l.5 1.3c.1.2.1.4 0 .6l-.4.5c-.1.1-.2.2-.1.4.3.6.8 1.2 1.4 1.6.3.2.4.2.6.1l.5-.3c.2-.1.4-.1.6 0l1.2.6c.2.1.3.3.2.6l-.2.7c-.1.3-.3.4-.6.5-.4.1-1 .2-1.6 0a7 7 0 0 1-3.3-2.2A7 7 0 0 1 8 11.3c-.1-.6 0-1.2.1-1.8.1-.3.3-.4.5-.5z" fill="currentColor"/></svg></a>
       </div>
 
-      <button class="burger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
-        <span></span><span></span><span></span>
+      <button class="theme-toggle" type="button" role="switch" aria-checked="true" aria-label="Alternar modo claro/escuro">
+        <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
+        <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
+      </button>
+      <button class="menu-toggle burger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
+        <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true" focusable="false">
+          <defs>
+            <radialGradient id="flash" cx="35%" cy="30%" r="65%">
+              <stop offset="0%" stop-color="rgba(255,255,255,0.65)"/>
+              <stop offset="35%" stop-color="rgba(255,255,255,0.18)"/>
+              <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+            </radialGradient>
+            <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="1.6" result="b"/>
+              <feMerge>
+                <feMergeNode in="b"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <circle class="flashlight" cx="32" cy="32" r="28" fill="url(#flash)"/>
+          <g class="orbit" filter="url(#glow)">
+            <circle class="p" cx="48" cy="20" r="1.4"/>
+            <circle class="p" cx="52" cy="34" r="1.1"/>
+            <circle class="p" cx="44" cy="48" r="1.2"/>
+            <circle class="p" cx="18" cy="46" r="1.0"/>
+            <circle class="p" cx="14" cy="28" r="1.3"/>
+            <circle class="p" cx="22" cy="16" r="1.0"/>
+          </g>
+          <g class="burger-glyph" filter="url(#glow)" stroke-linecap="round" stroke-linejoin="round">
+            <path class="menu-line menu-line-top" d="M18 22h28" />
+            <path class="menu-line menu-line-mid" d="M18 32h22" />
+            <path class="menu-line menu-line-bottom" d="M18 42h28" />
+            <circle class="menu-accent" cx="46" cy="32" r="2.2" fill="currentColor" stroke="none"/>
+          </g>
+        </svg>
       </button>
 
       <nav id="nav" class="nav" aria-label="Navegação principal">
@@ -55,6 +89,20 @@
         <a href="index.html#sobre"><span class="nav-label">SOBRE</span><span class="nav-sub">PT pine</span></a>
         <a href="index.html#contacto"><span class="nav-label">CONTACTO</span><span class="nav-sub">Email</span></a>
         <a class="nav-link highlight" href="comprar.html"><span class="nav-label">TODA A GAMA</span><span class="nav-sub">Tacks e produtos</span></a>
+        <div class="social social-menu" aria-label="Redes sociais no menu">
+          <a href="#top" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="17.5" cy="6.5" r="1.1" fill="currentColor"/></svg>
+          </a>
+          <a href="#top" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4h-3c-3 0-5 2-5 5v3H6v4h3v4h4v-4h3l1-4h-4V9c0-.6.4-1 1-1z" fill="currentColor"/></svg>
+          </a>
+          <a href="#top" aria-label="X / Twitter">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h4.3l4 5.3L17.5 4H20l-6.4 7.4L20 20h-4.3l-4.4-5.8L6.3 20H4l6.5-7.6L4 4z" fill="currentColor"/></svg>
+          </a>
+          <a href="#top" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4a8 8 0 0 0-6.9 12l-1 4 4.1-1A8 8 0 1 0 12 4z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 9.5c.2-.5.4-.5.6-.5h.4c.2 0 .5 0 .6.4l.5 1.3c.1.2.1.4 0 .6l-.4.5c-.1.1-.2.2-.1.4.3.6.8 1.2 1.4 1.6.3.2.4.2.6.1l.5-.3c.2-.1.4-.1.6 0l1.2.6c.2.1.3.3.2.6l-.2.7c-.1.3-.3.4-.6.5-.4.1-1 .2-1.6 0a7 7 0 0 1-3.3-2.2A7 7 0 0 1 8 11.3c-.1-.6 0-1.2.1-1.8.1-.3.3-.4.5-.5z" fill="currentColor"/></svg>
+          </a>
+        </div>
       </nav>
     </div>
   </header>
