@@ -507,11 +507,12 @@
   fillQuickProductSelect();
   initOrderPanel();
 
-  const shouldProcess = window.location.hash === '#contacto' || readCart().length > 0;
+  const canProcessCartIntoMessage = Boolean(qs('#contactForm') && qs('#message'));
+  const shouldProcess = canProcessCartIntoMessage && (window.location.hash === '#contacto' || readCart().length > 0);
   if (shouldProcess) processCartIntoMessage();
 
   window.addEventListener('hashchange', () => {
-    if (window.location.hash === '#contacto') {
+    if (canProcessCartIntoMessage && window.location.hash === '#contacto') {
       processCartIntoMessage();
     }
   });
