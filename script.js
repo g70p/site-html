@@ -525,3 +525,17 @@
     }
   });
 })();
+
+(() => {
+  'use strict';
+
+  const applyOverflowGuard = () => {
+    if (!document.documentElement || !document.body) return;
+    document.documentElement.style.overflowX = 'hidden';
+    document.body.style.overflowX = 'hidden';
+  };
+
+  applyOverflowGuard();
+  window.addEventListener('resize', applyOverflowGuard, { passive: true });
+  window.addEventListener('orientationchange', applyOverflowGuard, { passive: true });
+})();

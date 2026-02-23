@@ -946,3 +946,178 @@ img{ max-width:100%; display:block; }
     grid-template-columns: 1fr;
   }
 }
+
+/* Responsive + social/header/footer incremental updates */
+html,
+body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+.section .container {
+  overflow-x: clip;
+}
+
+#particles {
+  inset: 0;
+  max-width: 100%;
+}
+
+.cookie-inner,
+.max {
+  margin-left: auto;
+  margin-right: auto;
+  transform: none;
+}
+
+.brand {
+  flex-direction: row;
+  align-items: center;
+  gap: .55rem;
+}
+
+.brand-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.burger span,
+.burger:hover span,
+.burger:focus-visible span {
+  background: var(--amber);
+}
+
+.social {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.social a {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--amber);
+  background: rgba(255, 176, 0, 0.04);
+  border: 1px solid rgba(255, 176, 0, 0.25);
+}
+
+.social a svg {
+  width: 20px;
+  height: 20px;
+}
+
+.social-top {
+  margin-left: auto;
+  margin-right: .2rem;
+}
+
+.social-footer {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.spotlight-card {
+  margin-top: 1.1rem;
+  border: 1px solid rgba(255,176,0,.35);
+  border-radius: var(--r24);
+  background: rgba(255,255,255,.03);
+  box-shadow: 0 10px 24px rgba(0,0,0,.35);
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.spotlight-media {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255,176,0,.25);
+}
+
+.spotlight-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spotlight-copy p {
+  margin: .3rem 0 .75rem;
+  color: var(--muted);
+}
+
+.spotlight-price {
+  color: var(--amber);
+  font-family: 'Syncopate', system-ui;
+  letter-spacing: .08em;
+  font-size: .8rem;
+}
+
+@media (min-width: 900px) {
+  .spotlight-card {
+    grid-template-columns: minmax(280px, .95fr) 1.05fr;
+    align-items: center;
+  }
+}
+
+@media (max-width: 980px) {
+  .social-top {
+    order: 2;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 860px) {
+  .header-inner {
+    flex-wrap: wrap;
+  }
+
+  .brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .social-top {
+    order: 1;
+  }
+
+  .burger {
+    order: 3;
+    margin-left: auto;
+  }
+
+  .social a {
+    width: 36px;
+    height: 36px;
+  }
+
+  .social a svg {
+    width: 18px;
+    height: 18px;
+  }
+}
