@@ -347,9 +347,11 @@
 
   const appendMessage = (text) => {
     const message = qs('#message');
-    if (!message || !text.trim()) return;
-    const base = message.value.trim();
-    message.value = base ? `${base}\n\n---\n${text}` : text;
+    if (!message || !text.trim()) return false;
+    const base = (message.value || '').trim();
+    const separator = base ? '\n\n---\n\n' : '';
+    message.value = `${base}${separator}${text}`.trim() + '\n';
+    return true;
   };
 
   const buildProductsLines = (rows) => {
@@ -373,10 +375,16 @@
 
   const processCartIntoMessage = () => {
     const rows = readCart();
-    if (!rows.length) return;
+    if (!rows.length) return false;
+    const message = qs('#message');
+    if (!message) return false;
     const block = buildProductsLines(rows);
-    appendMessage(block);
-    writeCart([]);
+    const wrote = appendMessage(block);
+    if (wrote) {
+      writeCart([]);
+      return true;
+    }
+    return false;
   };
 
   const renderTodaAGama = () => {
@@ -507,11 +515,12 @@
   fillQuickProductSelect();
   initOrderPanel();
 
-  const shouldProcess = window.location.hash === '#contacto' || readCart().length > 0;
+  const canProcessCartIntoMessage = Boolean(qs('#contactForm') && qs('#message'));
+  const shouldProcess = canProcessCartIntoMessage && (window.location.hash === '#contacto' || readCart().length > 0);
   if (shouldProcess) processCartIntoMessage();
 
   window.addEventListener('hashchange', () => {
-    if (window.location.hash === '#contacto') {
+    if (canProcessCartIntoMessage && window.location.hash === '#contacto') {
       processCartIntoMessage();
     }
   });
