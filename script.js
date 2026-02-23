@@ -539,3 +539,51 @@
   window.addEventListener('resize', applyOverflowGuard, { passive: true });
   window.addEventListener('orientationchange', applyOverflowGuard, { passive: true });
 })();
+
+(function(){
+  const STORAGE_KEY = 'resigrip_theme';
+  let hasUserPreference = false;
+
+  function safeGet(key){
+    try { return window.localStorage.getItem(key); } catch(e){ return null; }
+  }
+  function safeSet(key, val){
+    try { window.localStorage.setItem(key, val); } catch(e){ /* ignore */ }
+  }
+
+  function systemPrefersDark(){
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    const buttons = document.querySelectorAll('.theme-toggle');
+    buttons.forEach((btn) => {
+      btn.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false');
+    });
+  }
+
+  function initTheme(){
+    const saved = safeGet(STORAGE_KEY);
+    hasUserPreference = saved === 'light' || saved === 'dark';
+    const theme = hasUserPreference ? saved : 'dark';
+    applyTheme(theme);
+  }
+
+  function toggleTheme(){
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    safeSet(STORAGE_KEY, next);
+    hasUserPreference = true;
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    initTheme();
+    const buttons = document.querySelectorAll('.theme-toggle');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', toggleTheme);
+    });
+
+  });
+})();
