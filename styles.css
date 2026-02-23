@@ -1477,3 +1477,17 @@ canvas {
     display: inline-flex;
   }
 }
+
+/* Correção: aumentar hambúrguer para o mesmo tamanho visual dos ícones sociais */
+.menu-toggle.burger {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+}
+
+.menu-toggle.burger .menu-icon {
+  width: 40px;
+  height: 40px;
+}
