@@ -566,7 +566,7 @@
   function initTheme(){
     const saved = safeGet(STORAGE_KEY);
     hasUserPreference = saved === 'light' || saved === 'dark';
-    const theme = hasUserPreference ? saved : 'dark';
+    const theme = hasUserPreference ? saved : (systemPrefersDark() ? 'dark' : 'light');
     applyTheme(theme);
   }
 
@@ -585,5 +585,15 @@
       btn.addEventListener('click', toggleTheme);
     });
 
+    if (window.matchMedia) {
+      const media = window.matchMedia('(prefers-color-scheme: dark)');
+      const onChange = function(event){
+        if (!hasUserPreference) {
+          applyTheme(event.matches ? 'dark' : 'light');
+        }
+      };
+      if (typeof media.addEventListener === 'function') media.addEventListener('change', onChange);
+      else if (typeof media.addListener === 'function') media.addListener(onChange);
+    }
   });
 })();
