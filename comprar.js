@@ -49,7 +49,12 @@
   const getProductIdFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const fromQuery = params.get('produto');
-    if (fromQuery) return fromQuery;
+    if (fromQuery) {
+      if (fromQuery === 'DESTAQUE') {
+        return PRODUCTS[0]?.id || '';
+      }
+      return fromQuery;
+    }
 
     const hash = window.location.hash || '';
     if (hash.startsWith('#prod-')) {
