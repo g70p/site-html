@@ -1873,3 +1873,20 @@ html[data-theme="light"] #cookieAccept {
   border: 1px solid #000;
   color: #000;
 }
+
+/* Correção incremental: mostrar ícone da ação disponível no toggle */
+html[data-theme="dark"] .header-actions .theme-toggle__icon--moon {
+  display: none;
+}
+
+html[data-theme="dark"] .header-actions .theme-toggle__icon--sun {
+  display: inline;
+}
+
+html[data-theme="light"] .header-actions .theme-toggle__icon--moon {
+  display: inline;
+}
+
+html[data-theme="light"] .header-actions .theme-toggle__icon--sun {
+  display: none;
+}

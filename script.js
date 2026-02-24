@@ -681,3 +681,65 @@
     bindSystemSchemeGuard();
   }
 })();
+
+(function () {
+  var STORAGE_KEY = 'resigrip_theme';
+
+  function safeGetTheme() {
+    try {
+      var stored = window.localStorage.getItem(STORAGE_KEY);
+      return stored === 'dark' || stored === 'light' ? stored : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeSetTheme(theme) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch (error) {
+      /* no-op */
+    }
+  }
+
+  function applyTheme(theme) {
+    var finalTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = finalTheme;
+
+    var toggles = document.querySelectorAll('.theme-toggle');
+    toggles.forEach(function (toggle) {
+      toggle.setAttribute('aria-checked', finalTheme === 'dark' ? 'true' : 'false');
+    });
+  }
+
+  function getNextTheme() {
+    return document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  }
+
+  function onToggleClick() {
+    var next = getNextTheme();
+    applyTheme(next);
+    safeSetTheme(next);
+  }
+
+  function resetToggleListeners() {
+    var toggles = document.querySelectorAll('.theme-toggle');
+    toggles.forEach(function (toggle) {
+      var cleanToggle = toggle.cloneNode(true);
+      toggle.parentNode.replaceChild(cleanToggle, toggle);
+      cleanToggle.addEventListener('click', onToggleClick);
+    });
+  }
+
+  function initThemeToggleFix() {
+    var storedTheme = safeGetTheme();
+    applyTheme(storedTheme || 'dark');
+    resetToggleListeners();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initThemeToggleFix);
+  } else {
+    initThemeToggleFix();
+  }
+})();
