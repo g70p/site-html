@@ -597,3 +597,87 @@
     }
   });
 })();
+
+(function () {
+  var STORAGE_KEY = 'resigrip_theme';
+
+  function safeGetTheme() {
+    try {
+      var stored = window.localStorage.getItem(STORAGE_KEY);
+      return stored === 'light' || stored === 'dark' ? stored : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeSetTheme(theme) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch (error) {
+      /* no-op */
+    }
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    var buttons = document.querySelectorAll('.theme-toggle');
+    buttons.forEach(function (button) {
+      button.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false');
+    });
+  }
+
+  function initTheme() {
+    var storedTheme = safeGetTheme();
+    var initialTheme = storedTheme || 'dark';
+    applyTheme(initialTheme);
+  }
+
+  function onToggleTheme() {
+    var current = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    safeSetTheme(next);
+  }
+
+  function bindThemeToggle() {
+    var buttons = document.querySelectorAll('.theme-toggle');
+    buttons.forEach(function (button) {
+      button.addEventListener('click', onToggleTheme);
+    });
+  }
+
+  function bindSystemSchemeGuard() {
+    if (!window.matchMedia) {
+      return;
+    }
+
+    var media = window.matchMedia('(prefers-color-scheme: dark)');
+    var enforceDefaultDark = function () {
+      var savedTheme = safeGetTheme();
+      if (!savedTheme) {
+        applyTheme('dark');
+      }
+    };
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', enforceDefaultDark);
+      return;
+    }
+
+    if (typeof media.addListener === 'function') {
+      media.addListener(enforceDefaultDark);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initTheme();
+      bindThemeToggle();
+      bindSystemSchemeGuard();
+    });
+  } else {
+    initTheme();
+    bindThemeToggle();
+    bindSystemSchemeGuard();
+  }
+})();
