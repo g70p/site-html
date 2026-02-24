@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pt-PT">
+<html lang="pt-PT" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -108,12 +108,16 @@
         </a>
       </div>
 
-      <button class="theme-toggle" type="button" role="switch" aria-checked="true" aria-label="Alternar modo claro/escuro">
-        <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
-        <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
-        <span class="theme-toggle__label">Tema</span>
-      </button>
-      <button class="menu-toggle burger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
+      <div class="header-actions">
+        <button class="theme-toggle" type="button" role="switch" aria-checked="true" aria-label="Alternar tema">
+          <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">☾</span>
+          <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">☀</span>
+        </button>
+        <div class="theme-dual" role="group" aria-label="Selecionar tema">
+          <button class="theme-icon-btn theme-icon-btn--dark" type="button" aria-label="Ativar tema escuro" data-theme-value="dark">☾</button>
+          <button class="theme-icon-btn theme-icon-btn--light" type="button" aria-label="Ativar tema claro" data-theme-value="light">☀</button>
+        </div>
+        <button class="menu-toggle burger" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav">
         <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="32" height="32" aria-hidden="true" focusable="false">
           <defs>
             <radialGradient id="flash" cx="35%" cy="30%" r="65%">
@@ -145,7 +149,8 @@
             <circle class="menu-accent" cx="46" cy="32" r="2.2" fill="currentColor" stroke="none"/>
           </g>
         </svg>
-      </button>
+        </button>
+      </div>
 
       <nav id="nav" class="nav" aria-label="Navegação principal">
         <a href="#home" data-id="home"><span class="nav-label">INÍCIO</span><span class="nav-sub">Home</span></a>

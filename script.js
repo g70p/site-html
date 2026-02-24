@@ -1,3 +1,79 @@
+(function () {
+  var memory = {};
+
+  function createMemoryStorage() {
+    return {
+      getItem: function (key) { return Object.prototype.hasOwnProperty.call(memory, key) ? memory[key] : null; },
+      setItem: function (key, value) { memory[String(key)] = String(value); },
+      removeItem: function (key) { delete memory[String(key)]; },
+      clear: function () { memory = {}; },
+      key: function (index) { return Object.keys(memory)[index] || null; },
+      get length() { return Object.keys(memory).length; }
+    };
+  }
+
+  function installFallbackStorage() {
+    var fallback = createMemoryStorage();
+    try {
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: fallback
+      });
+    } catch (error) {
+      window.__resigripFallbackStorage = fallback;
+    }
+  }
+
+  function patchStorageMethods(storage) {
+    if (!storage || storage.__resigripPatched) return;
+
+    var nativeGet = storage.getItem ? storage.getItem.bind(storage) : function () { return null; };
+    var nativeSet = storage.setItem ? storage.setItem.bind(storage) : function () {};
+    var nativeRemove = storage.removeItem ? storage.removeItem.bind(storage) : function () {};
+
+    storage.getItem = function (key) {
+      try { return nativeGet(key); } catch (error) { return null; }
+    };
+
+    storage.setItem = function (key, value) {
+      try { nativeSet(key, value); } catch (error) { /* no-op */ }
+    };
+
+    storage.removeItem = function (key) {
+      try { nativeRemove(key); } catch (error) { /* no-op */ }
+    };
+
+    storage.__resigripPatched = true;
+  }
+
+  function ensureStorageSafety() {
+    try {
+      var storage = window.localStorage;
+      var probe = '__resigrip_probe__';
+      storage.setItem(probe, '1');
+      storage.removeItem(probe);
+      patchStorageMethods(storage);
+      return;
+    } catch (error) {
+      installFallbackStorage();
+      if (window.localStorage) patchStorageMethods(window.localStorage);
+    }
+  }
+
+  function bootThemeDefault() {
+    var preferred = null;
+    try {
+      preferred = window.localStorage.getItem('resigrip_theme');
+    } catch (error) {
+      preferred = null;
+    }
+    document.documentElement.dataset.theme = preferred === 'light' ? 'light' : 'dark';
+  }
+
+  ensureStorageSafety();
+  bootThemeDefault();
+})();
+
 (() => {
   'use strict';
 
@@ -596,4 +672,212 @@
       else if (typeof media.addListener === 'function') media.addListener(onChange);
     }
   });
+})();
+
+(function () {
+  var STORAGE_KEY = 'resigrip_theme';
+
+  function safeGetTheme() {
+    try {
+      var stored = window.localStorage.getItem(STORAGE_KEY);
+      return stored === 'light' || stored === 'dark' ? stored : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeSetTheme(theme) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch (error) {
+      /* no-op */
+    }
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    var buttons = document.querySelectorAll('.theme-toggle');
+    buttons.forEach(function (button) {
+      button.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false');
+    });
+  }
+
+  function initTheme() {
+    var storedTheme = safeGetTheme();
+    var initialTheme = storedTheme || 'dark';
+    applyTheme(initialTheme);
+  }
+
+  function onToggleTheme() {
+    var current = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    var next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    safeSetTheme(next);
+  }
+
+  function bindThemeToggle() {
+    var buttons = document.querySelectorAll('.theme-toggle');
+    buttons.forEach(function (button) {
+      button.addEventListener('click', onToggleTheme);
+    });
+  }
+
+  function bindSystemSchemeGuard() {
+    if (!window.matchMedia) {
+      return;
+    }
+
+    var media = window.matchMedia('(prefers-color-scheme: dark)');
+    var enforceDefaultDark = function () {
+      var savedTheme = safeGetTheme();
+      if (!savedTheme) {
+        applyTheme('dark');
+      }
+    };
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', enforceDefaultDark);
+      return;
+    }
+
+    if (typeof media.addListener === 'function') {
+      media.addListener(enforceDefaultDark);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initTheme();
+      bindThemeToggle();
+      bindSystemSchemeGuard();
+    });
+  } else {
+    initTheme();
+    bindThemeToggle();
+    bindSystemSchemeGuard();
+  }
+})();
+
+(function () {
+  var STORAGE_KEY = 'resigrip_theme';
+
+  function safeGetTheme() {
+    try {
+      var stored = window.localStorage.getItem(STORAGE_KEY);
+      return stored === 'dark' || stored === 'light' ? stored : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeSetTheme(theme) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch (error) {
+      /* no-op */
+    }
+  }
+
+  function applyTheme(theme) {
+    var finalTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = finalTheme;
+
+    var toggles = document.querySelectorAll('.theme-toggle');
+    toggles.forEach(function (toggle) {
+      toggle.setAttribute('aria-checked', finalTheme === 'dark' ? 'true' : 'false');
+    });
+  }
+
+  function getNextTheme() {
+    return document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  }
+
+  function onToggleClick() {
+    var next = getNextTheme();
+    applyTheme(next);
+    safeSetTheme(next);
+  }
+
+  function resetToggleListeners() {
+    var toggles = document.querySelectorAll('.theme-toggle');
+    toggles.forEach(function (toggle) {
+      var cleanToggle = toggle.cloneNode(true);
+      toggle.parentNode.replaceChild(cleanToggle, toggle);
+      cleanToggle.addEventListener('click', onToggleClick);
+    });
+  }
+
+  function initThemeToggleFix() {
+    var storedTheme = safeGetTheme();
+    applyTheme(storedTheme || 'dark');
+    resetToggleListeners();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initThemeToggleFix);
+  } else {
+    initThemeToggleFix();
+  }
+})();
+
+(function () {
+  var STORAGE_KEY = 'resigrip_theme';
+
+  function safeGetTheme() {
+    try {
+      var value = window.localStorage.getItem(STORAGE_KEY);
+      return value === 'light' || value === 'dark' ? value : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeSetTheme(value) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, value);
+    } catch (error) {
+      /* no-op */
+    }
+  }
+
+  function applyTheme(theme) {
+    var finalTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = finalTheme;
+
+    var legacyToggles = document.querySelectorAll('.theme-toggle');
+    legacyToggles.forEach(function (toggle) {
+      toggle.setAttribute('aria-checked', finalTheme === 'dark' ? 'true' : 'false');
+    });
+
+    var iconButtons = document.querySelectorAll('.theme-icon-btn');
+    iconButtons.forEach(function (button) {
+      var active = button.getAttribute('data-theme-value') === finalTheme;
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function bindThemeIconButtons() {
+    var iconButtons = document.querySelectorAll('.theme-icon-btn');
+    iconButtons.forEach(function (button) {
+      var cleanButton = button.cloneNode(true);
+      button.parentNode.replaceChild(cleanButton, button);
+      cleanButton.addEventListener('click', function () {
+        var nextTheme = cleanButton.getAttribute('data-theme-value') === 'light' ? 'light' : 'dark';
+        applyTheme(nextTheme);
+        safeSetTheme(nextTheme);
+      });
+    });
+  }
+
+  function initDualThemeControls() {
+    var initialTheme = safeGetTheme() || 'dark';
+    applyTheme(initialTheme);
+    bindThemeIconButtons();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDualThemeControls);
+  } else {
+    initDualThemeControls();
+  }
 })();
