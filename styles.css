@@ -1890,3 +1890,41 @@ html[data-theme="light"] .header-actions .theme-toggle__icon--moon {
 html[data-theme="light"] .header-actions .theme-toggle__icon--sun {
   display: none;
 }
+
+/* Correção incremental: dois ícones lado a lado para seleção direta de tema */
+.header-actions > .theme-toggle {
+  display: none;
+}
+
+.theme-dual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.theme-icon-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 176, 0, 0.45);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--amber);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.theme-icon-btn[aria-pressed="true"] {
+  background: rgba(255, 176, 0, 0.2);
+  border-color: var(--amber);
+  box-shadow: 0 0 0 1px rgba(255, 176, 0, 0.35) inset;
+}
+
+.theme-icon-btn:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}

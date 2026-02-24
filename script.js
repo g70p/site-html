@@ -819,3 +819,65 @@
     initThemeToggleFix();
   }
 })();
+
+(function () {
+  var STORAGE_KEY = 'resigrip_theme';
+
+  function safeGetTheme() {
+    try {
+      var value = window.localStorage.getItem(STORAGE_KEY);
+      return value === 'light' || value === 'dark' ? value : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeSetTheme(value) {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, value);
+    } catch (error) {
+      /* no-op */
+    }
+  }
+
+  function applyTheme(theme) {
+    var finalTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = finalTheme;
+
+    var legacyToggles = document.querySelectorAll('.theme-toggle');
+    legacyToggles.forEach(function (toggle) {
+      toggle.setAttribute('aria-checked', finalTheme === 'dark' ? 'true' : 'false');
+    });
+
+    var iconButtons = document.querySelectorAll('.theme-icon-btn');
+    iconButtons.forEach(function (button) {
+      var active = button.getAttribute('data-theme-value') === finalTheme;
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+
+  function bindThemeIconButtons() {
+    var iconButtons = document.querySelectorAll('.theme-icon-btn');
+    iconButtons.forEach(function (button) {
+      var cleanButton = button.cloneNode(true);
+      button.parentNode.replaceChild(cleanButton, button);
+      cleanButton.addEventListener('click', function () {
+        var nextTheme = cleanButton.getAttribute('data-theme-value') === 'light' ? 'light' : 'dark';
+        applyTheme(nextTheme);
+        safeSetTheme(nextTheme);
+      });
+    });
+  }
+
+  function initDualThemeControls() {
+    var initialTheme = safeGetTheme() || 'dark';
+    applyTheme(initialTheme);
+    bindThemeIconButtons();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDualThemeControls);
+  } else {
+    initDualThemeControls();
+  }
+})();
