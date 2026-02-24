@@ -1,3 +1,79 @@
+(function () {
+  var memory = {};
+
+  function createMemoryStorage() {
+    return {
+      getItem: function (key) { return Object.prototype.hasOwnProperty.call(memory, key) ? memory[key] : null; },
+      setItem: function (key, value) { memory[String(key)] = String(value); },
+      removeItem: function (key) { delete memory[String(key)]; },
+      clear: function () { memory = {}; },
+      key: function (index) { return Object.keys(memory)[index] || null; },
+      get length() { return Object.keys(memory).length; }
+    };
+  }
+
+  function installFallbackStorage() {
+    var fallback = createMemoryStorage();
+    try {
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: fallback
+      });
+    } catch (error) {
+      window.__resigripFallbackStorage = fallback;
+    }
+  }
+
+  function patchStorageMethods(storage) {
+    if (!storage || storage.__resigripPatched) return;
+
+    var nativeGet = storage.getItem ? storage.getItem.bind(storage) : function () { return null; };
+    var nativeSet = storage.setItem ? storage.setItem.bind(storage) : function () {};
+    var nativeRemove = storage.removeItem ? storage.removeItem.bind(storage) : function () {};
+
+    storage.getItem = function (key) {
+      try { return nativeGet(key); } catch (error) { return null; }
+    };
+
+    storage.setItem = function (key, value) {
+      try { nativeSet(key, value); } catch (error) { /* no-op */ }
+    };
+
+    storage.removeItem = function (key) {
+      try { nativeRemove(key); } catch (error) { /* no-op */ }
+    };
+
+    storage.__resigripPatched = true;
+  }
+
+  function ensureStorageSafety() {
+    try {
+      var storage = window.localStorage;
+      var probe = '__resigrip_probe__';
+      storage.setItem(probe, '1');
+      storage.removeItem(probe);
+      patchStorageMethods(storage);
+      return;
+    } catch (error) {
+      installFallbackStorage();
+      if (window.localStorage) patchStorageMethods(window.localStorage);
+    }
+  }
+
+  function bootThemeDefault() {
+    var preferred = null;
+    try {
+      preferred = window.localStorage.getItem('resigrip_theme');
+    } catch (error) {
+      preferred = null;
+    }
+    document.documentElement.dataset.theme = preferred === 'light' ? 'light' : 'dark';
+  }
+
+  ensureStorageSafety();
+  bootThemeDefault();
+})();
+
 (() => {
   'use strict';
 
