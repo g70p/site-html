@@ -1928,3 +1928,57 @@ html[data-theme="light"] .header-actions .theme-toggle__icon--sun {
   outline: 2px solid var(--amber);
   outline-offset: 3px;
 }
+
+.brand-top {
+  font-weight: 900;
+  font-size: .95rem;
+  color: green;
+}
+
+.eyebrow-text {
+  font-family: 'Syncopate', system-ui;
+  font-size: .72rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: green;
+}
+
+html[data-theme="light"] body {
+  background: #ffffff !important;
+  color: greenyellow;
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html[data-theme="light"] body {
+  color: green;
+}
+
+.brand-mini {
+  font-family: 'Orbitron', system-ui;
+  letter-spacing: .05em;
+  font-weight: 800;
+  color: green;
+}
+
+html[data-theme="light"] body {
+  color: green;
+}
+
+/* Reversão incremental: restaurar estado anterior no tema light (1/2) */
+html[data-theme="light"] body {
+  background: var(--bg) !important;
+  color: #242323;
+  filter: none !important;
+}
+
+/* Reversão incremental: restaurar estado anterior no tema light (2/2) */
+html[data-theme="light"] body {
+  background: var(--bg) !important;
+  color: #242323;
+  filter: none !important;
+}
+
+html[data-theme="light"] h1,
+html[data-theme="light"] h2 {
+  color: green;
+}
