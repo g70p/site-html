@@ -2015,3 +2015,26 @@ html[data-theme="light"] .brand-mini {
   font-weight: 800;
   color: green;
 }
+
+/* Ajuste incremental: texto normal preto no tema light */
+html[data-theme="light"] body,
+html[data-theme="light"] .muted,
+html[data-theme="light"] .brand-sub,
+html[data-theme="light"] .lead,
+html[data-theme="light"] .hero-lead,
+html[data-theme="light"] .section p {
+  color: #000000;
+}
+
+/* Ajuste incremental: manter cor dos itens da janela de menu no tema light */
+html[data-theme="light"] .site-header .nav a,
+html[data-theme="light"] .site-header .nav .nav-sub {
+  color: #e1e5ec;
+}
+
+/* Ajuste incremental: caixa dos ícones sociais no tema light */
+html[data-theme="light"] .social-menu a {
+  background: rgba(32, 32, 26, 0.78);
+  border-color: rgba(28, 28, 28, 0.69);
+  color: #e1e5ec;
+}
