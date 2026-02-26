@@ -1928,3 +1928,117 @@ html[data-theme="light"] .header-actions .theme-toggle__icon--sun {
   outline: 2px solid var(--amber);
   outline-offset: 3px;
 }
+
+.brand-top {
+  font-weight: 900;
+  font-size: .95rem;
+  color: green;
+}
+
+.eyebrow-text {
+  font-family: 'Syncopate', system-ui;
+  font-size: .72rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: green;
+}
+
+html[data-theme="light"] body {
+  background: #ffffff !important;
+  color: greenyellow;
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html[data-theme="light"] body {
+  color: green;
+}
+
+.brand-mini {
+  font-family: 'Orbitron', system-ui;
+  letter-spacing: .05em;
+  font-weight: 800;
+  color: green;
+}
+
+html[data-theme="light"] body {
+  color: green;
+}
+
+/* Reversão incremental: restaurar estado anterior no tema light (1/2) */
+html[data-theme="light"] body {
+  background: var(--bg) !important;
+  color: #242323;
+  filter: none !important;
+}
+
+/* Reversão incremental: restaurar estado anterior no tema light (2/2) */
+html[data-theme="light"] body {
+  background: var(--bg) !important;
+  color: #242323;
+  filter: none !important;
+}
+
+html[data-theme="light"] h1,
+html[data-theme="light"] h2 {
+  color: green;
+}
+
+html[data-theme="light"] .site-header .nav {
+  background: rgba(32, 32, 26, 0.9);
+  border-bottom: 1px solid rgba(28, 28, 28, 0.69);
+}
+
+html[data-theme="light"] .social-menu {
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
+  gap: .55rem;
+  margin-top: .35rem;
+  padding: .7rem;
+  border-radius: 14px;
+  background: linear-gradient(90deg, rgba(238, 242, 233, 0.73), rgba(234, 229, 219, 0.33) 55%, rgba(240, 238, 234, 0.66));
+  border: 1px solid rgba(255, 176, 0, .42);
+}
+
+html[data-theme="light"] .muted,
+html[data-theme="light"] .nav-sub,
+html[data-theme="light"] .brand-sub,
+html[data-theme="light"] .lead,
+html[data-theme="light"] .hero-lead,
+html[data-theme="light"] .section p {
+  color: #e1e5ec;
+}
+
+html[data-theme="light"] .brand-mini {
+  font-family: 'Orbitron', system-ui;
+  letter-spacing: .05em;
+  font-weight: 800;
+  color: green;
+}
+
+/* Ajuste incremental: texto normal preto no tema light */
+html[data-theme="light"] body,
+html[data-theme="light"] .muted,
+html[data-theme="light"] .brand-sub,
+html[data-theme="light"] .lead,
+html[data-theme="light"] .hero-lead,
+html[data-theme="light"] .section p {
+  color: #000000;
+}
+
+/* Ajuste incremental: manter cor dos itens da janela de menu no tema light */
+html[data-theme="light"] .site-header .nav a,
+html[data-theme="light"] .site-header .nav .nav-sub {
+  color: #e1e5ec;
+}
+
+/* Ajuste incremental: caixa dos ícones sociais no tema light */
+html[data-theme="light"] .social-menu a {
+  background: rgba(32, 32, 26, 0.78);
+  border-color: rgba(28, 28, 28, 0.69);
+  color: #e1e5ec;
+}
+
+html[data-theme="light"] .site-footer {
+  background: rgba(27, 45, 15, 0.91);
+}
