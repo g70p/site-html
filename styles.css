@@ -2038,7 +2038,3 @@ html[data-theme="light"] .social-menu a {
   border-color: rgba(28, 28, 28, 0.69);
   color: #e1e5ec;
 }
-
-html[data-theme="light"] .site-footer {
-  background: rgba(27, 45, 15, 0.91);
-}
