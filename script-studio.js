@@ -111,9 +111,7 @@
     textLog: [],
     selectorOverrides: [],
     pickerActive: false,
-    inlineEditActive: false,
-      stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
-    stylePatch: {}
+    inlineEditActive: false
   };
 
   var defaultsByTheme = { dark: {}, light: {} };
@@ -318,22 +316,22 @@
           ? 'rgba(' + parseInt(nextColor.slice(1, 3), 16) + ',' + parseInt(nextColor.slice(3, 5), 16) + ',' + parseInt(nextColor.slice(5, 7), 16) + ',' + stopState.alpha + ')'
           : nextColor;
 
+        // Recalcular sempre os stops atuais para evitar desfasamentos (e.g. após edição manual).
         var source = String(state.tokens[item.key] || textInput.value || '');
-        var updated = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
+        var reparsed = parseGradientColors(source);
 
-        if (updated === source) {
-          var reparsed = parseGradientColors(source);
-          if (reparsed[stopState.index]) {
-            stopState.currentRaw = reparsed[stopState.index].raw;
-            stopState.alpha = reparsed[stopState.index].alpha;
-            updated = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
-          }
+        if (!reparsed.length || !reparsed[stopState.index]) {
+          // Fallback: substituir a primeira ocorrência conhecida.
+          state.tokens[item.key] = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
+        } else {
+          stopState.currentRaw = reparsed[stopState.index].raw;
+          stopState.alpha = reparsed[stopState.index].alpha;
+          state.tokens[item.key] = replaceNthOccurrence(source, stopState.currentRaw, replacement, stopState.index);
         }
 
-        state.tokens[item.key] = updated;
         stopState.currentRaw = replacement;
         stopState.currentHex = nextColor;
-        textInput.value = updated;
+        textInput.value = state.tokens[item.key];
         state.theme = 'custom';
         refreshThemeButtons();
         applyTokens();
@@ -577,9 +575,7 @@
       textLog: Array.isArray(parsed.textLog) ? parsed.textLog : [],
       selectorOverrides: Array.isArray(parsed.selectorOverrides) ? parsed.selectorOverrides : [],
       pickerActive: false,
-      inlineEditActive: false,
-      stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
-    stylePatch: {}
+      inlineEditActive: false
     };
 
     return normalized;
@@ -594,7 +590,6 @@
     state.text = normalized.text;
     state.textLog = normalized.textLog;
     state.selectorOverrides = normalized.selectorOverrides;
-    state.stylePatch = normalized.stylePatch || {};
     state.pickerActive = false;
     state.inlineEditActive = false;
     return true;
@@ -638,140 +633,7 @@
     applyTextOverrides();
   }
 
-  
-  function ensurePatchStyle(doc) {
-    if (!doc) return null;
-    var styleEl = doc.getElementById('studio-patch-style');
-    if (!styleEl) {
-      styleEl = doc.createElement('style');
-      styleEl.id = 'studio-patch-style';
-      doc.head.appendChild(styleEl);
-    }
-    return styleEl;
-  }
-
-  function buildPatchCss(patch) {
-    if (!patch || typeof patch !== 'object') return '';
-    var lines = [];
-    Object.keys(patch).sort().forEach(function (selector) {
-      var props = patch[selector];
-      if (!props || typeof props !== 'object') return;
-      var decls = [];
-      Object.keys(props).sort().forEach(function (prop) {
-        var val = props[prop];
-        if (typeof val !== 'string') return;
-        var trimmed = val.trim();
-        if (!trimmed) return;
-        decls.push('  ' + prop + ': ' + trimmed + ' !important;');
-      });
-      if (!decls.length) return;
-      lines.push(selector + ' {');
-      Array.prototype.push.apply(lines, decls);
-      lines.push('}');
-      lines.push('');
-    });
-    return lines.join('\n').trim() + (lines.length ? '\n' : '');
-  }
-
-  function applyStylePatch() {
-    var doc = getPreviewDocument();
-    if (!doc) return;
-    var styleEl = ensurePatchStyle(doc);
-    if (!styleEl) return;
-    styleEl.textContent = buildPatchCss(state.stylePatch);
-    updatePatchStatus();
-  }
-
-  function updatePatchStatus() {
-    if (!patchStatusEl) return;
-    var count = state.stylePatch ? Object.keys(state.stylePatch).length : 0;
-    patchStatusEl.textContent = 'Patch: ' + count + ' seletor(es).';
-  }
-
-  function parseRgbToHex(rgb) {
-    var m = String(rgb || '').match(/rgba?\((\s*\d+\s*),\s*(\d+)\s*,\s*(\d+)/i);
-    if (!m) return '';
-    var r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
-    var g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
-    var b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
-    var hex = '#' + [r, g, b].map(function (n) { return n.toString(16).padStart(2, '0'); }).join('');
-    return hex;
-  }
-
-  function setPickerPair(picker, input, value) {
-    if (!picker || !input) return;
-    input.value = value || '';
-    var hex = value && value[0] === '#' ? value : parseRgbToHex(value);
-    if (hex && /^#([0-9a-f]{6})$/i.test(hex)) {
-      picker.value = hex;
-    }
-  }
-
-  function getPatchedValue(selector, prop) {
-    if (!selector || !state.stylePatch || !state.stylePatch[selector]) return '';
-    return state.stylePatch[selector][prop] || '';
-  }
-
-  function setPatchedValues(selector, values) {
-    if (!selector) return;
-    state.stylePatch = state.stylePatch && typeof state.stylePatch === 'object' ? state.stylePatch : {};
-    state.stylePatch[selector] = Object.assign({}, state.stylePatch[selector] || {}, values || {});
-    // limpar entradas vazias
-    Object.keys(state.stylePatch[selector]).forEach(function (k) {
-      var v = state.stylePatch[selector][k];
-      if (!v || !String(v).trim()) delete state.stylePatch[selector][k];
-    });
-    if (!Object.keys(state.stylePatch[selector]).length) delete state.stylePatch[selector];
-    saveLocal();
-    applyStylePatch();
-  }
-
-  function deletePatchForSelector(selector) {
-    if (!selector || !state.stylePatch) return;
-    if (state.stylePatch[selector]) delete state.stylePatch[selector];
-    saveLocal();
-    applyStylePatch();
-  }
-
-  function resetPatch() {
-    state.stylePatch = {};
-    saveLocal();
-    applyStylePatch();
-  }
-
-  function downloadTextFile(filename, content) {
-    try {
-      var blob = new Blob([content], { type: 'text/css;charset=utf-8' });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
-    } catch (e) {
-      setStatus('Download não suportado neste navegador.');
-    }
-  }
-
-  function copyToClipboard(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      return navigator.clipboard.writeText(text);
-    }
-    var ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.focus();
-    ta.select();
-    try { document.execCommand('copy'); } catch (e) {}
-    ta.remove();
-    return Promise.resolve();
-  }
-
-function cssEscape(value) {
+  function cssEscape(value) {
     if (window.CSS && window.CSS.escape) return window.CSS.escape(value);
     return String(value).replace(/([^a-zA-Z0-9_-])/g, '\\$1');
   }
@@ -812,19 +674,13 @@ function cssEscape(value) {
     return crumbs.join(' > ');
   }
 
-  
-function updateSelectionPanel(el) {
+  function updateSelectionPanel(el) {
     if (!el) {
       selectionNameEl.textContent = 'Nenhum elemento selecionado.';
       selectionPathEl.textContent = 'Caminho: —';
       selectionStylesEl.innerHTML = '';
-      contentFieldsEl.innerHTML = '';
-      applyContentButton.disabled = true;
-      applyStyleButton.disabled = true;
-      revertStyleButton.disabled = true;
       copySelectorButton.disabled = true;
       selectedSelector = '';
-      updatePatchStatus();
       return;
     }
 
@@ -837,108 +693,15 @@ function updateSelectionPanel(el) {
     if (!doc) return;
     var computed = doc.defaultView.getComputedStyle(el);
 
-    // resumo de estilos (read-only)
     selectionStylesEl.innerHTML = '';
     ['color', 'background-color', 'font-size', 'font-weight', 'line-height'].forEach(function (prop) {
       var row = document.createElement('div');
-      var patched = getPatchedValue(selectedSelector, prop);
-      row.textContent = prop + ': ' + (patched ? (patched + '  (patch)') : computed.getPropertyValue(prop));
+      row.textContent = prop + ': ' + computed.getPropertyValue(prop);
       selectionStylesEl.appendChild(row);
     });
-
-    // Conteúdo (editável)
-    contentFieldsEl.innerHTML = '';
-    var tag = el.tagName ? el.tagName.toLowerCase() : '';
-    var isTextLike = ['p','span','a','button','h1','h2','h3','h4','h5','h6','li','label','small','strong','em','div'].indexOf(tag) !== -1;
-
-    var contentTextarea = null;
-    if (isTextLike) {
-      var label = document.createElement('label');
-      label.innerHTML = '<span>Texto</span>';
-      contentTextarea = document.createElement('textarea');
-      contentTextarea.id = 'content-text';
-      contentTextarea.rows = 3;
-      contentTextarea.value = (el.textContent || '').trim();
-      label.appendChild(contentTextarea);
-      contentFieldsEl.appendChild(label);
-    } else {
-      var note = document.createElement('p');
-      note.className = 'studio-inline-note';
-      note.textContent = 'Conteúdo: este tipo de elemento não tem edição de texto direta.';
-      contentFieldsEl.appendChild(note);
-    }
-
-    var hrefInput = null;
-    if (tag === 'a') {
-      var hrefLabel = document.createElement('label');
-      hrefLabel.innerHTML = '<span>href</span>';
-      hrefInput = document.createElement('input');
-      hrefInput.type = 'text';
-      hrefInput.id = 'content-href';
-      hrefInput.value = el.getAttribute('href') || '';
-      hrefLabel.appendChild(hrefInput);
-      contentFieldsEl.appendChild(hrefLabel);
-    }
-
-    applyContentButton.disabled = !(contentTextarea || hrefInput);
-    applyContentButton.onclick = function () {
-      var doc2 = getPreviewDocument();
-      if (!doc2) return;
-      if (contentTextarea) el.textContent = contentTextarea.value;
-      if (hrefInput) el.setAttribute('href', hrefInput.value);
-      setStatus('Conteúdo aplicado no preview (runtime).');
-    };
-
-    // Estilos (patch)
-    var patchedColor = getPatchedValue(selectedSelector, 'color') || computed.getPropertyValue('color');
-    var patchedBg = getPatchedValue(selectedSelector, 'background-color') || computed.getPropertyValue('background-color');
-
-    setPickerPair(styleColorPicker, styleColorInput, patchedColor);
-    setPickerPair(styleBgPicker, styleBgInput, patchedBg);
-
-    styleFontSizeInput.value = getPatchedValue(selectedSelector, 'font-size') || computed.getPropertyValue('font-size');
-    styleFontWeightSelect.value = getPatchedValue(selectedSelector, 'font-weight') || computed.getPropertyValue('font-weight');
-    styleLineHeightInput.value = getPatchedValue(selectedSelector, 'line-height') || computed.getPropertyValue('line-height');
-    stylePaddingInput.value = getPatchedValue(selectedSelector, 'padding') || computed.getPropertyValue('padding');
-    styleRadiusInput.value = getPatchedValue(selectedSelector, 'border-radius') || computed.getPropertyValue('border-radius');
-
-    function wirePicker(picker, input) {
-      picker.oninput = function () { input.value = picker.value; };
-      input.oninput = function () {
-        var val = input.value.trim();
-        if (/^#([0-9a-f]{6})$/i.test(val)) picker.value = val;
-      };
-    }
-    wirePicker(styleColorPicker, styleColorInput);
-    wirePicker(styleBgPicker, styleBgInput);
-
-    applyStyleButton.disabled = false;
-    revertStyleButton.disabled = false;
-
-    applyStyleButton.onclick = function () {
-      var values = {
-        'color': styleColorInput.value.trim(),
-        'background-color': styleBgInput.value.trim(),
-        'font-size': styleFontSizeInput.value.trim(),
-        'font-weight': String(styleFontWeightSelect.value || '').trim(),
-        'line-height': styleLineHeightInput.value.trim(),
-        'padding': stylePaddingInput.value.trim(),
-        'border-radius': styleRadiusInput.value.trim()
-      };
-      setPatchedValues(selectedSelector, values);
-      setStatus('Patch aplicado ao preview (runtime) e guardado localmente.');
-    };
-
-    revertStyleButton.onclick = function () {
-      deletePatchForSelector(selectedSelector);
-      // refresh panel with updated values
-      updateSelectionPanel(el);
-      setStatus('Patch removido para o elemento selecionado.');
-    };
-
-    updatePatchStatus();
   }
-function ensureRuntimeStyles(doc) {
+
+  function ensureRuntimeStyles(doc) {
     if (doc.getElementById('studio-runtime-style')) return;
     var styleEl = doc.createElement('style');
     styleEl.id = 'studio-runtime-style';
@@ -1092,48 +855,69 @@ function ensureRuntimeStyles(doc) {
     copyText(selectedSelector, 'Seletor CSS copiado.');
   });
 
-  document.getElementById('toggle-token-help').addEventListener('click', function () {
-    tokenHelp.hidden = !tokenHelp.hidden;
-    this.textContent = tokenHelp.hidden ? 'Mostrar ajuda de tokens' : 'Ocultar ajuda de tokens';
-  });
+  var toggleTokenHelpBtn = document.getElementById('toggle-token-help');
+  if (toggleTokenHelpBtn) {
+    toggleTokenHelpBtn.addEventListener('click', function () {
+      tokenHelp.hidden = !tokenHelp.hidden;
+      this.textContent = tokenHelp.hidden ? 'Mostrar ajuda de tokens' : 'Ocultar ajuda de tokens';
+    });
+  }
 
-  document.getElementById('copy-css').addEventListener('click', function () {
-    refreshOutput('css');
-    copyText(outputEl.value, 'CSS variables copiadas.');
-  });
+  var copyCssBtn = document.getElementById('copy-css');
+  if (copyCssBtn) {
+    copyCssBtn.addEventListener('click', function () {
+      refreshOutput('css');
+      copyText(outputEl.value, 'CSS variables copiadas.');
+    });
+  }
 
-  document.getElementById('copy-json').addEventListener('click', function () {
-    refreshOutput('json');
-    copyText(outputEl.value, 'JSON preset copiado.');
-  });
+  var copyJsonBtn = document.getElementById('copy-json');
+  if (copyJsonBtn) {
+    copyJsonBtn.addEventListener('click', function () {
+      refreshOutput('json');
+      copyText(outputEl.value, 'JSON preset copiado.');
+    });
+  }
 
-  document.getElementById('copy-log').addEventListener('click', function () {
-    var logText = state.textLog.map(function (entry) {
-      return '[' + entry.timestamp + '] ' + entry.selector + '\nAntes: ' + entry.before + '\nDepois: ' + entry.after;
-    }).join('\n\n');
-    copyText(logText || 'Sem entradas de LOG.', 'LOG copiado.');
-  });
+  var copyLogBtn = document.getElementById('copy-log');
+  if (copyLogBtn) {
+    copyLogBtn.addEventListener('click', function () {
+      var logText = state.textLog.map(function (entry) {
+        return '[' + entry.timestamp + '] ' + entry.selector + '\nAntes: ' + entry.before + '\nDepois: ' + entry.after;
+      }).join('\n\n');
+      copyText(logText || 'Sem entradas de LOG.', 'LOG copiado.');
+    });
+  }
 
-  document.getElementById('clear-log').addEventListener('click', function () {
-    state.textLog = [];
-    renderTextLog();
-    setStatus('LOG limpo.');
-  });
+  var clearLogBtn = document.getElementById('clear-log');
+  if (clearLogBtn) {
+    clearLogBtn.addEventListener('click', function () {
+      state.textLog = [];
+      renderTextLog();
+      setStatus('LOG limpo.');
+    });
+  }
 
-  document.getElementById('save-local').addEventListener('click', function () {
-    saveLocal();
-  });
+  var saveLocalBtn = document.getElementById('save-local');
+  if (saveLocalBtn) {
+    saveLocalBtn.addEventListener('click', function () {
+      saveLocal();
+    });
+  }
 
-  document.getElementById('reset-defaults').addEventListener('click', function () {
-    state.text = {};
-    state.textLog = [];
-    state.selectorOverrides = [];
-    renderTextLog();
-    applyTheme('dark');
-    syncTextInputs();
-    applyTextOverrides();
-    setStatus('Defaults repostos.');
-  });
+  var resetDefaultsBtn = document.getElementById('reset-defaults');
+  if (resetDefaultsBtn) {
+    resetDefaultsBtn.addEventListener('click', function () {
+      state.text = {};
+      state.textLog = [];
+      state.selectorOverrides = [];
+      renderTextLog();
+      applyTheme('dark');
+      syncTextInputs();
+      applyTextOverrides();
+      setStatus('Defaults repostos.');
+    });
+  }
 
   iframe.addEventListener('load', function () {
     var doc = getPreviewDocument();
@@ -1178,22 +962,3 @@ function ensureRuntimeStyles(doc) {
     setStatus('WEBMASTER STUDIO ativo em runtime. Sem alterações em ficheiros do site.');
   });
 })();
-  exportPatchButton.addEventListener('click', function () {
-    var cssText = buildPatchCss(state.stylePatch);
-    downloadTextFile('studio-patch.css', cssText);
-    setStatus('Patch exportado (download).');
-  });
-
-  copyPatchButton.addEventListener('click', function () {
-    var cssText = buildPatchCss(state.stylePatch);
-    copyToClipboard(cssText).then(function () {
-      setStatus('Patch copiado para a área de transferência.');
-    });
-  });
-
-  resetPatchButton.addEventListener('click', function () {
-    resetPatch();
-    updateSelectionPanel(null);
-    setStatus('Patch resetado (apenas local).');
-  });
-
