@@ -919,12 +919,17 @@
     });
   }
 
-  iframe.addEventListener('load', function () {
+  var studioBootstrapped = false;
+
+  function initStudioFromPreview() {
+    if (studioBootstrapped) return;
     var doc = getPreviewDocument();
-    if (!doc) {
+    if (!doc || !doc.documentElement || !doc.body) {
       setStatus('Preview bloqueado por política de origem.');
       return;
     }
+
+    studioBootstrapped = true;
 
     doc.documentElement.setAttribute('data-theme', 'dark');
     defaultsByTheme.dark = captureThemeDefaults(doc);
@@ -960,5 +965,11 @@
     togglePicker(false);
     toggleInlineEditing(false);
     setStatus('WEBMASTER STUDIO ativo em runtime. Sem alterações em ficheiros do site.');
-  });
+  }
+
+  iframe.addEventListener('load', initStudioFromPreview);
+
+  if (iframe && iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+    initStudioFromPreview();
+  }
 })();
