@@ -2091,3 +2091,16 @@ html[data-theme="light"] .site-header.scrolled {
   background: var(--header-scrolled-bg);
   border-bottom-color: var(--header-scrolled-border);
 }
+
+/* Webmaster Studio token bridge (runtime friendly) */
+:root {
+  --footer-text: color-mix(in srgb, var(--text) 58%, transparent);
+}
+
+.site-footer .muted {
+  color: var(--footer-text);
+}
+
+html[data-theme="light"] {
+  --footer-text: color-mix(in srgb, #ffffff 78%, transparent);
+}
