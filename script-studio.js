@@ -192,6 +192,30 @@
     return output;
   }
 
+  function normalizeColor(value) {
+    if (!value) return '#000000';
+    var hex = value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+    if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+      return '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+    }
+    return '#000000';
+  }
+
+  function captureThemeDefaults(doc) {
+    var root = doc.documentElement;
+    var computed = doc.defaultView.getComputedStyle(root);
+    var output = {};
+
+    tokenSchema.forEach(function (item) {
+      var value = computed.getPropertyValue(item.key).trim();
+      if (item.type === 'range') {
+        out[item.key] = parseFloat(value) || (item.key === '--font-size-base' ? 16 : 1.6);
+      } else {
+        output[item.key] = value;
+      }
+    });
+
   function applyTokens() {
     var doc = getPreviewDocument();
     if (!doc) return;
@@ -285,8 +309,8 @@
         range.type = 'range';
         range.min = item.min;
         range.max = item.max;
-        if (item.step) range.step = item.step;
         range.value = state.tokens[item.key];
+        if (item.step) range.step = item.step;
 
         var rangeText = document.createElement('input');
         rangeText.type = 'text';
@@ -814,7 +838,9 @@
 
     Object.keys(textSelectors).forEach(function (key) {
       var el = doc.querySelector(textSelectors[key]);
-      if (el) defaultTexts[key] = el.textContent.trim();
+      if (el) {
+        defaultTexts[key] = el.textContent.trim();
+      }
     });
 
     loadLocal();
