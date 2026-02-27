@@ -1,8 +1,40 @@
 (function () {
-  var params = new URLSearchParams(window.location.search);
-  var isWebmaster = params.get('mode') === 'webmaster';
+  var params = null;
+  try {
+    params = new URLSearchParams(window.location.search);
+  } catch (e) {
+    params = null;
+  }
+
+  function getQueryParam(name) {
+    if (params && typeof params.get === 'function') {
+      return params.get(name);
+    }
+    // Fallback para browsers antigos sem URLSearchParams
+    var query = window.location.search;
+    if (!query || query.length < 2) return null;
+    var pairs = query.substring(1).split('&');
+    for (var i = 0; i < pairs.length; i++) {
+      var parts = pairs[i].split('=');
+      if (decodeURIComponent(parts[0] || '') === name) {
+        return decodeURIComponent(parts.slice(1).join('=') || '');
+      }
+    }
+    return null;
+  }
+
+  var modeParam = getQueryParam('mode');
+  var hash = (window.location.hash || '').toLowerCase();
+  var proto = (window.location.protocol || '').toLowerCase();
+  var host = (window.location.hostname || '').toLowerCase();
+  var isLocal = (proto === 'file:' || host === 'localhost' || host === '127.0.0.1');
+  var isWebmaster = (modeParam === 'webmaster') || (hash.indexOf('webmaster') !== -1) || isLocal;
   var restricted = document.getElementById('restricted');
   var app = document.getElementById('studio-app');
+  if (!restricted || !app) {
+    // Estrutura inesperada do DOM: falhar em modo seguro (restrito) sem lançar erro.
+    return;
+  }
 
   if (!isWebmaster) {
     restricted.hidden = false;
@@ -202,20 +234,6 @@
     }
     return '#000000';
   }
-
-  function captureThemeDefaults(doc) {
-    var root = doc.documentElement;
-    var computed = doc.defaultView.getComputedStyle(root);
-    var output = {};
-
-    tokenSchema.forEach(function (item) {
-      var value = computed.getPropertyValue(item.key).trim();
-      if (item.type === 'range') {
-        out[item.key] = parseFloat(value) || (item.key === '--font-size-base' ? 16 : 1.6);
-      } else {
-        output[item.key] = value;
-      }
-    });
 
   function applyTokens() {
     var doc = getPreviewDocument();
