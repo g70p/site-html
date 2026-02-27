@@ -111,7 +111,9 @@
     textLog: [],
     selectorOverrides: [],
     pickerActive: false,
-    inlineEditActive: false
+    inlineEditActive: false,
+      stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
+    stylePatch: {}
   };
 
   var defaultsByTheme = { dark: {}, light: {} };
@@ -575,7 +577,9 @@
       textLog: Array.isArray(parsed.textLog) ? parsed.textLog : [],
       selectorOverrides: Array.isArray(parsed.selectorOverrides) ? parsed.selectorOverrides : [],
       pickerActive: false,
-      inlineEditActive: false
+      inlineEditActive: false,
+      stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
+    stylePatch: {}
     };
 
     return normalized;
@@ -590,6 +594,7 @@
     state.text = normalized.text;
     state.textLog = normalized.textLog;
     state.selectorOverrides = normalized.selectorOverrides;
+    state.stylePatch = normalized.stylePatch || {};
     state.pickerActive = false;
     state.inlineEditActive = false;
     return true;
@@ -633,7 +638,140 @@
     applyTextOverrides();
   }
 
-  function cssEscape(value) {
+  
+  function ensurePatchStyle(doc) {
+    if (!doc) return null;
+    var styleEl = doc.getElementById('studio-patch-style');
+    if (!styleEl) {
+      styleEl = doc.createElement('style');
+      styleEl.id = 'studio-patch-style';
+      doc.head.appendChild(styleEl);
+    }
+    return styleEl;
+  }
+
+  function buildPatchCss(patch) {
+    if (!patch || typeof patch !== 'object') return '';
+    var lines = [];
+    Object.keys(patch).sort().forEach(function (selector) {
+      var props = patch[selector];
+      if (!props || typeof props !== 'object') return;
+      var decls = [];
+      Object.keys(props).sort().forEach(function (prop) {
+        var val = props[prop];
+        if (typeof val !== 'string') return;
+        var trimmed = val.trim();
+        if (!trimmed) return;
+        decls.push('  ' + prop + ': ' + trimmed + ' !important;');
+      });
+      if (!decls.length) return;
+      lines.push(selector + ' {');
+      Array.prototype.push.apply(lines, decls);
+      lines.push('}');
+      lines.push('');
+    });
+    return lines.join('\n').trim() + (lines.length ? '\n' : '');
+  }
+
+  function applyStylePatch() {
+    var doc = getPreviewDocument();
+    if (!doc) return;
+    var styleEl = ensurePatchStyle(doc);
+    if (!styleEl) return;
+    styleEl.textContent = buildPatchCss(state.stylePatch);
+    updatePatchStatus();
+  }
+
+  function updatePatchStatus() {
+    if (!patchStatusEl) return;
+    var count = state.stylePatch ? Object.keys(state.stylePatch).length : 0;
+    patchStatusEl.textContent = 'Patch: ' + count + ' seletor(es).';
+  }
+
+  function parseRgbToHex(rgb) {
+    var m = String(rgb || '').match(/rgba?\((\s*\d+\s*),\s*(\d+)\s*,\s*(\d+)/i);
+    if (!m) return '';
+    var r = Math.max(0, Math.min(255, parseInt(m[1], 10)));
+    var g = Math.max(0, Math.min(255, parseInt(m[2], 10)));
+    var b = Math.max(0, Math.min(255, parseInt(m[3], 10)));
+    var hex = '#' + [r, g, b].map(function (n) { return n.toString(16).padStart(2, '0'); }).join('');
+    return hex;
+  }
+
+  function setPickerPair(picker, input, value) {
+    if (!picker || !input) return;
+    input.value = value || '';
+    var hex = value && value[0] === '#' ? value : parseRgbToHex(value);
+    if (hex && /^#([0-9a-f]{6})$/i.test(hex)) {
+      picker.value = hex;
+    }
+  }
+
+  function getPatchedValue(selector, prop) {
+    if (!selector || !state.stylePatch || !state.stylePatch[selector]) return '';
+    return state.stylePatch[selector][prop] || '';
+  }
+
+  function setPatchedValues(selector, values) {
+    if (!selector) return;
+    state.stylePatch = state.stylePatch && typeof state.stylePatch === 'object' ? state.stylePatch : {};
+    state.stylePatch[selector] = Object.assign({}, state.stylePatch[selector] || {}, values || {});
+    // limpar entradas vazias
+    Object.keys(state.stylePatch[selector]).forEach(function (k) {
+      var v = state.stylePatch[selector][k];
+      if (!v || !String(v).trim()) delete state.stylePatch[selector][k];
+    });
+    if (!Object.keys(state.stylePatch[selector]).length) delete state.stylePatch[selector];
+    saveLocal();
+    applyStylePatch();
+  }
+
+  function deletePatchForSelector(selector) {
+    if (!selector || !state.stylePatch) return;
+    if (state.stylePatch[selector]) delete state.stylePatch[selector];
+    saveLocal();
+    applyStylePatch();
+  }
+
+  function resetPatch() {
+    state.stylePatch = {};
+    saveLocal();
+    applyStylePatch();
+  }
+
+  function downloadTextFile(filename, content) {
+    try {
+      var blob = new Blob([content], { type: 'text/css;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+    } catch (e) {
+      setStatus('Download não suportado neste navegador.');
+    }
+  }
+
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    return Promise.resolve();
+  }
+
+function cssEscape(value) {
     if (window.CSS && window.CSS.escape) return window.CSS.escape(value);
     return String(value).replace(/([^a-zA-Z0-9_-])/g, '\\$1');
   }
@@ -674,13 +812,19 @@
     return crumbs.join(' > ');
   }
 
-  function updateSelectionPanel(el) {
+  
+function updateSelectionPanel(el) {
     if (!el) {
       selectionNameEl.textContent = 'Nenhum elemento selecionado.';
       selectionPathEl.textContent = 'Caminho: —';
       selectionStylesEl.innerHTML = '';
+      contentFieldsEl.innerHTML = '';
+      applyContentButton.disabled = true;
+      applyStyleButton.disabled = true;
+      revertStyleButton.disabled = true;
       copySelectorButton.disabled = true;
       selectedSelector = '';
+      updatePatchStatus();
       return;
     }
 
@@ -693,15 +837,108 @@
     if (!doc) return;
     var computed = doc.defaultView.getComputedStyle(el);
 
+    // resumo de estilos (read-only)
     selectionStylesEl.innerHTML = '';
     ['color', 'background-color', 'font-size', 'font-weight', 'line-height'].forEach(function (prop) {
       var row = document.createElement('div');
-      row.textContent = prop + ': ' + computed.getPropertyValue(prop);
+      var patched = getPatchedValue(selectedSelector, prop);
+      row.textContent = prop + ': ' + (patched ? (patched + '  (patch)') : computed.getPropertyValue(prop));
       selectionStylesEl.appendChild(row);
     });
-  }
 
-  function ensureRuntimeStyles(doc) {
+    // Conteúdo (editável)
+    contentFieldsEl.innerHTML = '';
+    var tag = el.tagName ? el.tagName.toLowerCase() : '';
+    var isTextLike = ['p','span','a','button','h1','h2','h3','h4','h5','h6','li','label','small','strong','em','div'].indexOf(tag) !== -1;
+
+    var contentTextarea = null;
+    if (isTextLike) {
+      var label = document.createElement('label');
+      label.innerHTML = '<span>Texto</span>';
+      contentTextarea = document.createElement('textarea');
+      contentTextarea.id = 'content-text';
+      contentTextarea.rows = 3;
+      contentTextarea.value = (el.textContent || '').trim();
+      label.appendChild(contentTextarea);
+      contentFieldsEl.appendChild(label);
+    } else {
+      var note = document.createElement('p');
+      note.className = 'studio-inline-note';
+      note.textContent = 'Conteúdo: este tipo de elemento não tem edição de texto direta.';
+      contentFieldsEl.appendChild(note);
+    }
+
+    var hrefInput = null;
+    if (tag === 'a') {
+      var hrefLabel = document.createElement('label');
+      hrefLabel.innerHTML = '<span>href</span>';
+      hrefInput = document.createElement('input');
+      hrefInput.type = 'text';
+      hrefInput.id = 'content-href';
+      hrefInput.value = el.getAttribute('href') || '';
+      hrefLabel.appendChild(hrefInput);
+      contentFieldsEl.appendChild(hrefLabel);
+    }
+
+    applyContentButton.disabled = !(contentTextarea || hrefInput);
+    applyContentButton.onclick = function () {
+      var doc2 = getPreviewDocument();
+      if (!doc2) return;
+      if (contentTextarea) el.textContent = contentTextarea.value;
+      if (hrefInput) el.setAttribute('href', hrefInput.value);
+      setStatus('Conteúdo aplicado no preview (runtime).');
+    };
+
+    // Estilos (patch)
+    var patchedColor = getPatchedValue(selectedSelector, 'color') || computed.getPropertyValue('color');
+    var patchedBg = getPatchedValue(selectedSelector, 'background-color') || computed.getPropertyValue('background-color');
+
+    setPickerPair(styleColorPicker, styleColorInput, patchedColor);
+    setPickerPair(styleBgPicker, styleBgInput, patchedBg);
+
+    styleFontSizeInput.value = getPatchedValue(selectedSelector, 'font-size') || computed.getPropertyValue('font-size');
+    styleFontWeightSelect.value = getPatchedValue(selectedSelector, 'font-weight') || computed.getPropertyValue('font-weight');
+    styleLineHeightInput.value = getPatchedValue(selectedSelector, 'line-height') || computed.getPropertyValue('line-height');
+    stylePaddingInput.value = getPatchedValue(selectedSelector, 'padding') || computed.getPropertyValue('padding');
+    styleRadiusInput.value = getPatchedValue(selectedSelector, 'border-radius') || computed.getPropertyValue('border-radius');
+
+    function wirePicker(picker, input) {
+      picker.oninput = function () { input.value = picker.value; };
+      input.oninput = function () {
+        var val = input.value.trim();
+        if (/^#([0-9a-f]{6})$/i.test(val)) picker.value = val;
+      };
+    }
+    wirePicker(styleColorPicker, styleColorInput);
+    wirePicker(styleBgPicker, styleBgInput);
+
+    applyStyleButton.disabled = false;
+    revertStyleButton.disabled = false;
+
+    applyStyleButton.onclick = function () {
+      var values = {
+        'color': styleColorInput.value.trim(),
+        'background-color': styleBgInput.value.trim(),
+        'font-size': styleFontSizeInput.value.trim(),
+        'font-weight': String(styleFontWeightSelect.value || '').trim(),
+        'line-height': styleLineHeightInput.value.trim(),
+        'padding': stylePaddingInput.value.trim(),
+        'border-radius': styleRadiusInput.value.trim()
+      };
+      setPatchedValues(selectedSelector, values);
+      setStatus('Patch aplicado ao preview (runtime) e guardado localmente.');
+    };
+
+    revertStyleButton.onclick = function () {
+      deletePatchForSelector(selectedSelector);
+      // refresh panel with updated values
+      updateSelectionPanel(el);
+      setStatus('Patch removido para o elemento selecionado.');
+    };
+
+    updatePatchStatus();
+  }
+function ensureRuntimeStyles(doc) {
     if (doc.getElementById('studio-runtime-style')) return;
     var styleEl = doc.createElement('style');
     styleEl.id = 'studio-runtime-style';
@@ -941,3 +1178,22 @@
     setStatus('WEBMASTER STUDIO ativo em runtime. Sem alterações em ficheiros do site.');
   });
 })();
+  exportPatchButton.addEventListener('click', function () {
+    var cssText = buildPatchCss(state.stylePatch);
+    downloadTextFile('studio-patch.css', cssText);
+    setStatus('Patch exportado (download).');
+  });
+
+  copyPatchButton.addEventListener('click', function () {
+    var cssText = buildPatchCss(state.stylePatch);
+    copyToClipboard(cssText).then(function () {
+      setStatus('Patch copiado para a área de transferência.');
+    });
+  });
+
+  resetPatchButton.addEventListener('click', function () {
+    resetPatch();
+    updateSelectionPanel(null);
+    setStatus('Patch resetado (apenas local).');
+  });
+
