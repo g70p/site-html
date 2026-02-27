@@ -77,10 +77,11 @@
   var copyPatchButton = document.getElementById('copy-patch');
   var resetPatchButton = document.getElementById('reset-patch');
   var copySelectorButton = document.getElementById('copy-selector');
+  var fixSelectorButton = document.getElementById('fix-selector');
   var pickerButton = document.getElementById('toggle-picker');
   var inlineEditButton = document.getElementById('toggle-inline-edit');
 
-  if (!iframe || !statusEl || !outputEl || !tokenControls || !tokenMapEl || !tokenHelp || !textLogEl || !selectionNameEl || !selectionPathEl || !selectionStylesEl || !contentFieldsEl || !applyContentButton || !styleColorPicker || !styleColorInput || !styleBgPicker || !styleBgInput || !styleFontSizeInput || !styleFontWeightSelect || !styleLineHeightInput || !stylePaddingInput || !styleRadiusInput || !applyStyleButton || !revertStyleButton || !patchStatusEl || !exportPatchButton || !copyPatchButton || !resetPatchButton || !copySelectorButton || !pickerButton || !inlineEditButton) {
+  if (!iframe || !statusEl || !outputEl || !tokenControls || !tokenMapEl || !tokenHelp || !textLogEl || !selectionNameEl || !selectionPathEl || !selectionStylesEl || !contentFieldsEl || !applyContentButton || !styleColorPicker || !styleColorInput || !styleBgPicker || !styleBgInput || !styleFontSizeInput || !styleFontWeightSelect || !styleLineHeightInput || !stylePaddingInput || !styleRadiusInput || !applyStyleButton || !revertStyleButton || !patchStatusEl || !exportPatchButton || !copyPatchButton || !resetPatchButton || !copySelectorButton || !fixSelectorButton || !pickerButton || !inlineEditButton) {
     app.hidden = true;
     restricted.hidden = false;
     if (restricted) {
@@ -129,7 +130,6 @@
     selectorOverrides: [],
     pickerActive: false,
     inlineEditActive: false,
-      stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
     stylePatch: {}
   };
 
@@ -144,6 +144,9 @@
 
   var defaultTexts = {};
   var selectedSelector = '';
+  var selectedElement = null;
+  var selectorPinned = false;
+  var previewInitialTheme = 'dark';
 
   function setStatus(message) {
     statusEl.textContent = message || '';
@@ -596,7 +599,6 @@
       pickerActive: false,
       inlineEditActive: false,
       stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
-    stylePatch: {}
     };
 
     return normalized;
@@ -811,6 +813,39 @@ function cssEscape(value) {
     return parts.join(' > ');
   }
 
+  function getStableSelector(el) {
+    if (!el || !el.tagName) return '';
+    if (el.id) return '#' + cssEscape(el.id);
+
+    var tag = el.tagName.toLowerCase();
+    var classes = Array.prototype.filter.call(el.classList || [], function (className) {
+      return className && className.indexOf('studio-') !== 0;
+    });
+
+    if (classes.length) {
+      return tag + '.' + cssEscape(classes[0]);
+    }
+
+    if (el.parentElement && el.parentElement.id) {
+      return '#' + cssEscape(el.parentElement.id) + ' > ' + tag;
+    }
+
+    return getCssSelector(el);
+  }
+
+  function resolveSelectionTarget(target) {
+    if (!target) return null;
+    var node = target.nodeType === 1 ? target : target.parentElement;
+    if (!node || !node.closest) return node;
+
+    var grouped = node.closest('[data-studio-group], section, article, .card, .product-card, .hero, li');
+    if (grouped && grouped.tagName && grouped.tagName.toLowerCase() !== 'body') {
+      return grouped;
+    }
+
+    return node;
+  }
+
   function getElementSignature(el) {
     if (!el) return '';
     var tag = el.tagName.toLowerCase();
@@ -840,15 +875,22 @@ function updateSelectionPanel(el) {
       applyStyleButton.disabled = true;
       revertStyleButton.disabled = true;
       copySelectorButton.disabled = true;
+      fixSelectorButton.disabled = true;
       selectedSelector = '';
+      selectedElement = null;
+      selectorPinned = false;
       updatePatchStatus();
       return;
     }
 
-    selectedSelector = getCssSelector(el);
+    selectedElement = el;
+    if (!selectorPinned || !selectedSelector) {
+      selectedSelector = getCssSelector(el);
+    }
     selectionNameEl.textContent = getElementSignature(el);
-    selectionPathEl.textContent = 'Caminho: ' + getBreadcrumb(el);
+    selectionPathEl.textContent = 'Caminho: ' + (selectorPinned ? (selectedSelector + ' (fixado)') : getBreadcrumb(el));
     copySelectorButton.disabled = false;
+    fixSelectorButton.disabled = false;
 
     var doc = getPreviewDocument();
     if (!doc) return;
@@ -898,6 +940,19 @@ function updateSelectionPanel(el) {
     }
 
     applyContentButton.disabled = !(contentTextarea || hrefInput);
+
+    if (contentTextarea) {
+      contentTextarea.oninput = function () {
+        el.textContent = contentTextarea.value;
+      };
+    }
+
+    if (hrefInput) {
+      hrefInput.oninput = function () {
+        el.setAttribute('href', hrefInput.value);
+      };
+    }
+
     applyContentButton.onclick = function () {
       var doc2 = getPreviewDocument();
       if (!doc2) return;
@@ -932,8 +987,8 @@ function updateSelectionPanel(el) {
     applyStyleButton.disabled = false;
     revertStyleButton.disabled = false;
 
-    applyStyleButton.onclick = function () {
-      var values = {
+    function readStyleFormValues() {
+      return {
         'color': styleColorInput.value.trim(),
         'background-color': styleBgInput.value.trim(),
         'font-size': styleFontSizeInput.value.trim(),
@@ -942,8 +997,23 @@ function updateSelectionPanel(el) {
         'padding': stylePaddingInput.value.trim(),
         'border-radius': styleRadiusInput.value.trim()
       };
-      setPatchedValues(selectedSelector, values);
-      setStatus('Patch aplicado ao preview (runtime) e guardado localmente.');
+    }
+
+    function applyStyleFromForm(liveMode) {
+      setPatchedValues(selectedSelector, readStyleFormValues());
+      if (!liveMode) {
+        setStatus('Patch aplicado ao preview (runtime) e guardado localmente.');
+      }
+    }
+
+    [styleColorInput, styleBgInput, styleFontSizeInput, styleFontWeightSelect, styleLineHeightInput, stylePaddingInput, styleRadiusInput].forEach(function (field) {
+      if (!field) return;
+      field.oninput = function () { applyStyleFromForm(true); };
+      field.onchange = function () { applyStyleFromForm(true); };
+    });
+
+    applyStyleButton.onclick = function () {
+      applyStyleFromForm(false);
     };
 
     revertStyleButton.onclick = function () {
@@ -976,9 +1046,13 @@ function ensureRuntimeStyles(doc) {
     var doc = getPreviewDocument();
     if (!doc) return;
 
+    selectorPinned = false;
+    var targetEl = resolveSelectionTarget(event.target);
+    if (!targetEl || !targetEl.classList) return;
+
     clearSelectionHighlight(doc);
-    event.target.classList.add('studio-selected-element');
-    updateSelectionPanel(event.target);
+    targetEl.classList.add('studio-selected-element');
+    updateSelectionPanel(targetEl);
     setStatus('Elemento selecionado no preview.');
   }
 
@@ -1109,6 +1183,14 @@ function ensureRuntimeStyles(doc) {
     copyText(selectedSelector, 'Seletor CSS copiado.');
   });
 
+  fixSelectorButton.addEventListener('click', function () {
+    if (!selectedElement) return;
+    selectedSelector = getStableSelector(selectedElement);
+    selectorPinned = true;
+    updateSelectionPanel(selectedElement);
+    setStatus('Seletor fixado para uma versão estável.');
+  });
+
   document.getElementById('toggle-token-help').addEventListener('click', function () {
     tokenHelp.hidden = !tokenHelp.hidden;
     this.textContent = tokenHelp.hidden ? 'Mostrar ajuda de tokens' : 'Ocultar ajuda de tokens';
@@ -1183,10 +1265,13 @@ function ensureRuntimeStyles(doc) {
 
     studioBootstrapped = true;
 
-    doc.documentElement.setAttribute('data-theme', 'dark');
-    defaultsByTheme.dark = captureThemeDefaults(doc);
-    doc.documentElement.setAttribute('data-theme', 'light');
-    defaultsByTheme.light = captureThemeDefaults(doc);
+    previewInitialTheme = doc.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+    defaultsByTheme[previewInitialTheme] = captureThemeDefaults(doc);
+
+    var alternateTheme = previewInitialTheme === 'dark' ? 'light' : 'dark';
+    doc.documentElement.setAttribute('data-theme', alternateTheme);
+    defaultsByTheme[alternateTheme] = captureThemeDefaults(doc);
+    doc.documentElement.setAttribute('data-theme', previewInitialTheme);
 
     Object.keys(textSelectors).forEach(function (key) {
       var el = doc.querySelector(textSelectors[key]);
@@ -1198,11 +1283,11 @@ function ensureRuntimeStyles(doc) {
     loadLocal();
 
     if (!Object.keys(state.tokens).length) {
-      state.tokens = Object.assign({}, defaultsByTheme.dark);
+      state.tokens = Object.assign({}, defaultsByTheme[previewInitialTheme] || defaultsByTheme.dark);
     }
 
     if (['dark', 'light', 'custom'].indexOf(state.theme) === -1) {
-      state.theme = 'dark';
+      state.theme = previewInitialTheme;
     }
 
     renderTokenMap();
