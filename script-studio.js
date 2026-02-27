@@ -316,22 +316,23 @@
           ? 'rgba(' + parseInt(nextColor.slice(1, 3), 16) + ',' + parseInt(nextColor.slice(3, 5), 16) + ',' + parseInt(nextColor.slice(5, 7), 16) + ',' + stopState.alpha + ')'
           : nextColor;
 
-        // Recalcular sempre os stops atuais para evitar desfasamentos (e.g. após edição manual).
         var source = String(state.tokens[item.key] || textInput.value || '');
+
+        // Reinterpretar stops a cada alteração para manter o índice correto mesmo após edição manual.
         var reparsed = parseGradientColors(source);
+        var rawAtIndex = reparsed[stopState.index] ? reparsed[stopState.index].raw : stopState.currentRaw;
+        var alphaAtIndex = reparsed[stopState.index] ? reparsed[stopState.index].alpha : stopState.alpha;
 
-        if (!reparsed.length || !reparsed[stopState.index]) {
-          // Fallback: substituir a primeira ocorrência conhecida.
-          state.tokens[item.key] = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
-        } else {
-          stopState.currentRaw = reparsed[stopState.index].raw;
-          stopState.alpha = reparsed[stopState.index].alpha;
-          state.tokens[item.key] = replaceNthOccurrence(source, stopState.currentRaw, replacement, stopState.index);
-        }
+        stopState.currentRaw = rawAtIndex;
+        stopState.alpha = alphaAtIndex;
 
+        // Substituir a ocorrência N do valor (em caso de cores repetidas).
+        var updated = replaceNthOccurrence(source, rawAtIndex, replacement, stopState.index);
+
+        state.tokens[item.key] = updated;
         stopState.currentRaw = replacement;
         stopState.currentHex = nextColor;
-        textInput.value = state.tokens[item.key];
+        textInput.value = updated;
         state.theme = 'custom';
         refreshThemeButtons();
         applyTokens();
@@ -722,9 +723,16 @@
     var doc = getPreviewDocument();
     if (!doc) return;
 
+    // Normalizar alvo: cliques em texto podem ter target como Text node.
+    var target = event.target;
+    if (target && target.nodeType !== 1) {
+      target = target.parentElement;
+    }
+    if (!target || target.nodeType !== 1) return;
+
     clearSelectionHighlight(doc);
-    event.target.classList.add('studio-selected-element');
-    updateSelectionPanel(event.target);
+    target.classList.add('studio-selected-element');
+    updateSelectionPanel(target);
     setStatus('Elemento selecionado no preview.');
   }
 
@@ -779,6 +787,11 @@
     inlineEditButton.textContent = enabled ? 'Terminar edição' : 'Editar texto';
     inlineEditButton.classList.toggle('is-active', enabled);
 
+    // Evitar conflito de UX: editar texto e selecionar por clique ao mesmo tempo.
+    if (enabled && state.pickerActive) {
+      togglePicker(false);
+    }
+
     var candidates = doc.body ? doc.body.querySelectorAll('p,h1,h2,h3,h4,h5,h6,a,button,li,small,span,div') : [];
     Array.prototype.forEach.call(candidates, function (el) {
       if (!isEditableElement(el)) return;
@@ -799,6 +812,12 @@
     state.pickerActive = enabled;
     pickerButton.textContent = enabled ? 'Desativar seleção' : 'Ativar seleção';
     pickerButton.classList.toggle('is-active', enabled);
+
+    // Evitar conflito de UX: seleção por clique bloqueia cliques normais (inclui foco para editar).
+    if (enabled && state.inlineEditActive) {
+      toggleInlineEditing(false);
+    }
+
     setStatus(enabled ? 'Seleção por clique ativa.' : 'Seleção por clique desativada.');
   }
 
@@ -855,81 +874,55 @@
     copyText(selectedSelector, 'Seletor CSS copiado.');
   });
 
-  var toggleTokenHelpBtn = document.getElementById('toggle-token-help');
-  if (toggleTokenHelpBtn) {
-    toggleTokenHelpBtn.addEventListener('click', function () {
-      tokenHelp.hidden = !tokenHelp.hidden;
-      this.textContent = tokenHelp.hidden ? 'Mostrar ajuda de tokens' : 'Ocultar ajuda de tokens';
-    });
-  }
+  document.getElementById('toggle-token-help').addEventListener('click', function () {
+    tokenHelp.hidden = !tokenHelp.hidden;
+    this.textContent = tokenHelp.hidden ? 'Mostrar ajuda de tokens' : 'Ocultar ajuda de tokens';
+  });
 
-  var copyCssBtn = document.getElementById('copy-css');
-  if (copyCssBtn) {
-    copyCssBtn.addEventListener('click', function () {
-      refreshOutput('css');
-      copyText(outputEl.value, 'CSS variables copiadas.');
-    });
-  }
+  document.getElementById('copy-css').addEventListener('click', function () {
+    refreshOutput('css');
+    copyText(outputEl.value, 'CSS variables copiadas.');
+  });
 
-  var copyJsonBtn = document.getElementById('copy-json');
-  if (copyJsonBtn) {
-    copyJsonBtn.addEventListener('click', function () {
-      refreshOutput('json');
-      copyText(outputEl.value, 'JSON preset copiado.');
-    });
-  }
+  document.getElementById('copy-json').addEventListener('click', function () {
+    refreshOutput('json');
+    copyText(outputEl.value, 'JSON preset copiado.');
+  });
 
-  var copyLogBtn = document.getElementById('copy-log');
-  if (copyLogBtn) {
-    copyLogBtn.addEventListener('click', function () {
-      var logText = state.textLog.map(function (entry) {
-        return '[' + entry.timestamp + '] ' + entry.selector + '\nAntes: ' + entry.before + '\nDepois: ' + entry.after;
-      }).join('\n\n');
-      copyText(logText || 'Sem entradas de LOG.', 'LOG copiado.');
-    });
-  }
+  document.getElementById('copy-log').addEventListener('click', function () {
+    var logText = state.textLog.map(function (entry) {
+      return '[' + entry.timestamp + '] ' + entry.selector + '\nAntes: ' + entry.before + '\nDepois: ' + entry.after;
+    }).join('\n\n');
+    copyText(logText || 'Sem entradas de LOG.', 'LOG copiado.');
+  });
 
-  var clearLogBtn = document.getElementById('clear-log');
-  if (clearLogBtn) {
-    clearLogBtn.addEventListener('click', function () {
-      state.textLog = [];
-      renderTextLog();
-      setStatus('LOG limpo.');
-    });
-  }
+  document.getElementById('clear-log').addEventListener('click', function () {
+    state.textLog = [];
+    renderTextLog();
+    setStatus('LOG limpo.');
+  });
 
-  var saveLocalBtn = document.getElementById('save-local');
-  if (saveLocalBtn) {
-    saveLocalBtn.addEventListener('click', function () {
-      saveLocal();
-    });
-  }
+  document.getElementById('save-local').addEventListener('click', function () {
+    saveLocal();
+  });
 
-  var resetDefaultsBtn = document.getElementById('reset-defaults');
-  if (resetDefaultsBtn) {
-    resetDefaultsBtn.addEventListener('click', function () {
-      state.text = {};
-      state.textLog = [];
-      state.selectorOverrides = [];
-      renderTextLog();
-      applyTheme('dark');
-      syncTextInputs();
-      applyTextOverrides();
-      setStatus('Defaults repostos.');
-    });
-  }
+  document.getElementById('reset-defaults').addEventListener('click', function () {
+    state.text = {};
+    state.textLog = [];
+    state.selectorOverrides = [];
+    renderTextLog();
+    applyTheme('dark');
+    syncTextInputs();
+    applyTextOverrides();
+    setStatus('Defaults repostos.');
+  });
 
-  var studioBootstrapped = false;
-
-  function initStudioFromPreview() {
-    if (studioBootstrapped) return;
+  iframe.addEventListener('load', function () {
     var doc = getPreviewDocument();
-    if (!doc || !doc.documentElement || !doc.body) {
+    if (!doc) {
       setStatus('Preview bloqueado por política de origem.');
       return;
     }
-
-    studioBootstrapped = true;
 
     doc.documentElement.setAttribute('data-theme', 'dark');
     defaultsByTheme.dark = captureThemeDefaults(doc);
@@ -965,11 +958,5 @@
     togglePicker(false);
     toggleInlineEditing(false);
     setStatus('WEBMASTER STUDIO ativo em runtime. Sem alterações em ficheiros do site.');
-  }
-
-  iframe.addEventListener('load', initStudioFromPreview);
-
-  if (iframe && iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
-    initStudioFromPreview();
-  }
+  });
 })();
