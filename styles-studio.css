@@ -314,3 +314,70 @@ select {
   padding: .45rem .55rem;
 }
 
+
+/* --- Inspector (estilos computados) --- */
+.studio-style-search {
+  display: grid;
+  gap: .35rem;
+  margin: .35rem 0 .5rem;
+}
+
+.studio-style-list {
+  display: grid;
+  gap: .35rem;
+  max-height: 34vh;
+  overflow: auto;
+  border: 1px solid var(--studio-border);
+  border-radius: 12px;
+  padding: .5rem;
+  background: rgba(0,0,0,.12);
+}
+
+.studio-style-row {
+  display: grid;
+  grid-template-columns: 170px 1fr auto auto;
+  gap: .45rem;
+  align-items: center;
+}
+
+.studio-style-name {
+  font-size: .78rem;
+  opacity: .95;
+}
+
+.studio-style-value {
+  width: 100%;
+  min-width: 0;
+}
+
+.studio-style-meta {
+  font-size: .72rem;
+  opacity: .7;
+  white-space: nowrap;
+}
+
+.studio-style-row.is-patched .studio-style-meta {
+  opacity: 1;
+}
+
+.studio-style-clear {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--studio-border);
+  background: transparent;
+  color: var(--studio-text);
+}
+
+.studio-style-clear:hover {
+  background: rgba(255,255,255,.06);
+}
+
+@media (max-width: 960px) {
+  .studio-style-row {
+    grid-template-columns: 130px 1fr auto;
+  }
+  .studio-style-meta {
+    display: none;
+  }
+}

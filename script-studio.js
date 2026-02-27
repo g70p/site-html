@@ -852,14 +852,144 @@ function updateSelectionPanel(el) {
     if (!doc) return;
     var computed = doc.defaultView.getComputedStyle(el);
 
-    // resumo de estilos (read-only)
-    selectionStylesEl.innerHTML = '';
-    ['color', 'background-color', 'font-size', 'font-weight', 'line-height'].forEach(function (prop) {
-      var row = document.createElement('div');
-      var patched = getPatchedValue(selectedSelector, prop);
-      row.textContent = prop + ': ' + (patched ? (patched + '  (patch)') : computed.getPropertyValue(prop));
-      selectionStylesEl.appendChild(row);
+    
+// estilos (computados + patch) com pesquisa e edição livre
+selectionStylesEl.innerHTML = '';
+var searchWrap = document.createElement('div');
+searchWrap.className = 'studio-style-search';
+
+var searchInput = document.createElement('input');
+searchInput.type = 'search';
+searchInput.placeholder = 'Pesquisar propriedade (ex.: shadow, border, font, color...)';
+searchInput.autocomplete = 'off';
+searchWrap.appendChild(searchInput);
+
+var hint = document.createElement('div');
+hint.className = 'studio-inline-note';
+hint.textContent = 'Dica: editar aqui cria entradas no Patch (CSS com !important).';
+searchWrap.appendChild(hint);
+
+var list = document.createElement('div');
+list.className = 'studio-style-list';
+
+selectionStylesEl.appendChild(searchWrap);
+selectionStylesEl.appendChild(list);
+
+var inheritedProps = {
+  'color': true, 'font': true, 'font-family': true, 'font-size': true, 'font-weight': true, 'font-style': true,
+  'letter-spacing': true, 'line-height': true, 'text-align': true, 'text-transform': true, 'text-decoration': true,
+  'text-shadow': true, 'word-spacing': true, 'white-space': true, 'visibility': true, 'cursor': true
+};
+
+function findInheritanceSource(element, propName, currentValue) {
+  if (!inheritedProps[propName]) return '';
+  var parent = element && element.parentElement ? element.parentElement : null;
+  while (parent) {
+    var parentVal = doc.defaultView.getComputedStyle(parent).getPropertyValue(propName);
+    if (parentVal && parentVal.trim() !== String(currentValue || '').trim()) break;
+    var next = parent.parentElement;
+    if (!next) break;
+    parent = next;
+  }
+  return parent ? getElementSignature(parent) : '';
+}
+
+function renderStyleList(filterText) {
+  list.innerHTML = '';
+  var filter = String(filterText || '').trim().toLowerCase();
+  var frag = document.createDocumentFragment();
+
+  var max = Math.min(computed.length, 400);
+  for (var i = 0; i < max; i += 1) {
+    var prop = computed[i];
+    if (!prop) continue;
+    if (filter && prop.toLowerCase().indexOf(filter) === -1) continue;
+
+    var currentVal = computed.getPropertyValue(prop);
+    var patchedVal = getPatchedValue(selectedSelector, prop);
+    var shownVal = patchedVal ? patchedVal : currentVal;
+
+    var row = document.createElement('div');
+    row.className = 'studio-style-row';
+
+    var name = document.createElement('code');
+    name.className = 'studio-style-name';
+    name.textContent = prop;
+    row.appendChild(name);
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'studio-style-value';
+    input.value = String(shownVal || '').trim();
+    input.placeholder = String(currentVal || '').trim();
+
+    if (patchedVal) row.classList.add('is-patched');
+
+    input.addEventListener('change', function (p, elInput) {
+      return function () {
+        var nextVal = String(elInput.value || '').trim();
+        var obj = {};
+        obj[p] = nextVal;
+        setPatchedValues(selectedSelector, obj);
+        setStatus('Patch atualizado: ' + p);
+        updateSelectionPanel(el);
+      };
+    }(prop, input));
+
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') {
+        ev.preventDefault();
+        ev.target.blur();
+      }
     });
+
+    row.appendChild(input);
+
+    var meta = document.createElement('span');
+    meta.className = 'studio-style-meta';
+    if (patchedVal) {
+      meta.textContent = 'patch';
+    } else {
+      var inh = findInheritanceSource(el, prop, currentVal);
+      meta.textContent = inh ? ('herdado: ' + inh) : '';
+    }
+    row.appendChild(meta);
+
+    var clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.className = 'studio-style-clear';
+    clearBtn.textContent = '×';
+    clearBtn.title = 'Remover do patch (se existir)';
+    clearBtn.addEventListener('click', function (p) {
+      return function () {
+        if (!state.stylePatch || !state.stylePatch[selectedSelector] || !state.stylePatch[selectedSelector][p]) return;
+        var obj = {};
+        obj[p] = '';
+        setPatchedValues(selectedSelector, obj);
+        setStatus('Removido do patch: ' + p);
+        updateSelectionPanel(el);
+      };
+    }(prop));
+    row.appendChild(clearBtn);
+
+    frag.appendChild(row);
+  }
+
+  if (!frag.childNodes.length) {
+    var empty = document.createElement('p');
+    empty.className = 'studio-inline-note';
+    empty.textContent = 'Sem propriedades a mostrar para este filtro.';
+    frag.appendChild(empty);
+  }
+
+  list.appendChild(frag);
+}
+
+searchInput.addEventListener('input', function () {
+  renderStyleList(searchInput.value);
+});
+
+renderStyleList('');
 
     // Conteúdo (editável)
     contentFieldsEl.innerHTML = '';
@@ -966,6 +1096,26 @@ function ensureRuntimeStyles(doc) {
     if (selected) selected.classList.remove('studio-selected-element');
   }
 
+
+function clearHoverHighlight(doc) {
+  var hover = doc.querySelector('.studio-hover-element');
+  if (hover) hover.classList.remove('studio-hover-element');
+}
+
+function handlePickerMove(event) {
+  if (!state.pickerActive) return;
+  var doc = getPreviewDocument();
+  if (!doc) return;
+  var target = event.target;
+  if (!target || target === doc.documentElement || target === doc.body) return;
+
+  var current = doc.querySelector('.studio-hover-element');
+  if (current && current !== target) current.classList.remove('studio-hover-element');
+  if (!target.classList.contains('studio-selected-element')) {
+    target.classList.add('studio-hover-element');
+  }
+}
+
   function handlePickerClick(event) {
     if (!state.pickerActive) return;
     event.preventDefault();
@@ -975,6 +1125,7 @@ function ensureRuntimeStyles(doc) {
     if (!doc) return;
 
     clearSelectionHighlight(doc);
+    clearHoverHighlight(doc);
     event.target.classList.add('studio-selected-element');
     updateSelectionPanel(event.target);
     setStatus('Elemento selecionado no preview.');
@@ -1022,6 +1173,22 @@ function ensureRuntimeStyles(doc) {
     }
   }
 
+
+function handlePreviewKeydown(event) {
+  var key = String(event.key || '').toLowerCase();
+  if (event.ctrlKey && event.shiftKey && key === 'c') {
+    event.preventDefault();
+    toggleInlineEditing(false);
+    togglePicker(true);
+    return;
+  }
+  if (key === 'escape') {
+    togglePicker(false);
+    toggleInlineEditing(false);
+    return;
+  }
+}
+
   function toggleInlineEditing(forceValue) {
     var doc = getPreviewDocument();
     if (!doc) return;
@@ -1046,11 +1213,18 @@ function ensureRuntimeStyles(doc) {
     setStatus(enabled ? 'Edição inline ativa.' : 'Edição inline desativada.');
   }
 
-  function togglePicker(forceValue) {
+  
+function togglePicker(forceValue) {
     var enabled = typeof forceValue === 'boolean' ? forceValue : !state.pickerActive;
     state.pickerActive = enabled;
     pickerButton.textContent = enabled ? 'Desativar seleção' : 'Ativar seleção';
     pickerButton.classList.toggle('is-active', enabled);
+
+    var doc = getPreviewDocument();
+    if (doc && !enabled) {
+      clearHoverHighlight(doc);
+    }
+
     setStatus(enabled ? 'Seleção por clique ativa.' : 'Seleção por clique desativada.');
   }
 
@@ -1074,10 +1248,12 @@ function ensureRuntimeStyles(doc) {
     var doc = getPreviewDocument();
     if (!doc) return;
     ensureRuntimeStyles(doc);
+    doc.addEventListener('mousemove', handlePickerMove, true);
     doc.addEventListener('click', handlePickerClick, true);
     doc.addEventListener('focusin', handleEditableFocus, true);
     doc.addEventListener('blur', handleEditableBlur, true);
     doc.addEventListener('keydown', handleEditableKeydown, true);
+    doc.addEventListener('keydown', handlePreviewKeydown, true);
   }
 
   document.querySelectorAll('[data-theme]').forEach(function (button) {
@@ -1222,4 +1398,26 @@ function ensureRuntimeStyles(doc) {
   if (iframe && iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
     initStudioFromPreview();
   }
+
+
+// Atalhos tipo DevTools
+window.addEventListener('keydown', function (event) {
+  var key = String(event.key || '').toLowerCase();
+
+  // Ctrl+Shift+C => modo seleção (picker)
+  if (event.ctrlKey && event.shiftKey && key === 'c') {
+    event.preventDefault();
+    toggleInlineEditing(false);
+    togglePicker(true);
+    return;
+  }
+
+  // Esc => sair de seleção/edição
+  if (key === 'escape') {
+    togglePicker(false);
+    toggleInlineEditing(false);
+    return;
+  }
+}, true);
+
 })();
