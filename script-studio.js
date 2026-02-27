@@ -13,7 +13,9 @@
   restricted.hidden = true;
   app.hidden = false;
 
-  var STORAGE_KEY = 'resigrip_studio_state_v2';
+  var STORAGE_KEY = 'resigrip_studio_state_v3';
+  var LEGACY_STORAGE_KEY = 'resigrip_studio_state_v2';
+  var LEGACY_STORAGE_KEY_V1 = 'resigrip_studio_state_v1';
   var iframe = document.getElementById('site-preview');
   var statusEl = document.getElementById('studio-status');
   var outputEl = document.getElementById('studio-output');
@@ -29,24 +31,34 @@
   var pickerButton = document.getElementById('toggle-picker');
   var inlineEditButton = document.getElementById('toggle-inline-edit');
 
+  if (!iframe || !statusEl || !outputEl || !tokenControls || !tokenMapEl || !tokenHelp || !textLogEl || !selectionNameEl || !selectionPathEl || !selectionStylesEl || !copySelectorButton || !pickerButton || !inlineEditButton) {
+    app.hidden = true;
+    restricted.hidden = false;
+    if (restricted) {
+      restricted.textContent = 'Studio indisponível: estrutura incompleta.';
+    }
+    return;
+  }
+
   var tokenSchema = [
-    { key: '--bg', label: 'Fundo da página', category: 'Surface', type: 'color', usage: 'body e secções base' },
-    { key: '--surface', label: 'Superfície base', category: 'Surface', type: 'text', usage: 'cards, painéis, blocos' },
-    { key: '--surface-2', label: 'Superfície alternativa', category: 'Surface', type: 'text', usage: 'variações de cartões' },
-    { key: '--text', label: 'Texto principal', category: 'Text', type: 'color', usage: 'texto geral' },
-    { key: '--text-muted', label: 'Texto secundário', category: 'Text', type: 'text', usage: 'legendas e subtítulos' },
-    { key: '--footer-text', label: 'Texto do footer', category: 'Text', type: 'text', usage: 'copyright do rodapé' },
-    { key: '--accent', label: 'Cor de destaque', category: 'Accent', type: 'color', usage: 'botões/estado ativo', alias: '--amber' },
-    { key: '--link', label: 'Cor de links', category: 'Accent', type: 'color', usage: 'links no conteúdo' },
-    { key: '--link-hover', label: 'Hover de links', category: 'Accent', type: 'color', usage: 'hover de links' },
-    { key: '--border', label: 'Bordas base', category: 'Borders', type: 'text', usage: 'divisórias e cartões' },
-    { key: '--focus', label: 'Focus ring', category: 'States', type: 'text', usage: 'estados de foco' },
-    { key: '--gradient-header', label: 'Gradiente do header', category: 'Gradients', type: 'text', usage: 'fundo do topo fixo' },
-    { key: '--gradient-accent', label: 'Gradiente de destaque', category: 'Gradients', type: 'text', usage: 'botões e blocos accent' },
-    { key: '--shadow-1', label: 'Sombra curta', category: 'Shadows', type: 'text', usage: 'componentes base' },
-    { key: '--shadow-2', label: 'Sombra profunda', category: 'Shadows', type: 'text', usage: 'blocos em destaque' },
-    { key: '--font-size-base', label: 'Tamanho base da fonte', category: 'Typography', type: 'range', min: 14, max: 22, unit: 'px', usage: 'texto geral do documento' },
-    { key: '--line-height-base', label: 'Altura de linha base', category: 'Typography', type: 'range', min: 1.2, max: 2, step: 0.05, usage: 'legibilidade global' }
+    { key: '--bg', label: 'Fundo da página', category: 'Surface', editor: 'color', usage: 'body e secções base' },
+    { key: '--surface', label: 'Superfície base', category: 'Surface', editor: 'color', usage: 'cards, painéis, blocos' },
+    { key: '--surface-2', label: 'Superfície alternativa', category: 'Surface', editor: 'color', usage: 'variações de cartões' },
+    { key: '--footer-bg', label: 'Fundo do footer', category: 'Surface', editor: 'color', usage: 'rodapé principal' },
+    { key: '--text', label: 'Texto principal', category: 'Text', editor: 'color', usage: 'texto geral' },
+    { key: '--text-muted', label: 'Texto secundário', category: 'Text', editor: 'color', usage: 'legendas e subtítulos' },
+    { key: '--footer-text', label: 'Texto do footer', category: 'Text', editor: 'color', usage: 'copyright do rodapé' },
+    { key: '--accent', label: 'Cor de destaque', category: 'Accent', editor: 'color', usage: 'botões/estado ativo', alias: '--amber' },
+    { key: '--link', label: 'Cor de links', category: 'Accent', editor: 'color', usage: 'links no conteúdo' },
+    { key: '--link-hover', label: 'Hover de links', category: 'Accent', editor: 'color', usage: 'hover de links' },
+    { key: '--border', label: 'Bordas base', category: 'Borders', editor: 'color', usage: 'divisórias e cartões' },
+    { key: '--focus', label: 'Focus ring', category: 'States', editor: 'color', usage: 'estados de foco' },
+    { key: '--gradient-header', label: 'Gradiente do header', category: 'Gradients', editor: 'gradient', usage: 'fundo do topo fixo' },
+    { key: '--gradient-accent', label: 'Gradiente de destaque', category: 'Gradients', editor: 'gradient', usage: 'botões e blocos accent' },
+    { key: '--shadow-1', label: 'Sombra curta', category: 'Shadows', editor: 'text', usage: 'componentes base' },
+    { key: '--shadow-2', label: 'Sombra profunda', category: 'Shadows', editor: 'text', usage: 'blocos em destaque' },
+    { key: '--font-size-base', label: 'Tamanho base da fonte', category: 'Typography', editor: 'range', min: 14, max: 22, unit: 'px', usage: 'texto geral do documento' },
+    { key: '--line-height-base', label: 'Altura de linha base', category: 'Typography', editor: 'range', min: 1.2, max: 2, step: 0.05, usage: 'legibilidade global' }
   ];
 
   var tokenCategoryDescriptions = {
@@ -80,7 +92,6 @@
   };
 
   var defaultTexts = {};
-  var selectedElement = null;
   var selectedSelector = '';
 
   function setStatus(message) {
@@ -108,13 +119,78 @@
 
   function styleTextMap(obj) {
     var keys = Object.keys(obj);
-    if (!keys.length) {
-      return ':root{}';
-    }
-    var lines = keys.map(function (key) {
+    if (!keys.length) return ':root{}';
+    return ':root{\n' + keys.map(function (key) {
       return '  ' + key + ': ' + obj[key] + ';';
+    }).join('\n') + '\n}';
+  }
+
+  function normalizeHex(value) {
+    var hex = String(value || '').trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) return hex.toLowerCase();
+    if (/^#[0-9a-fA-F]{3}$/.test(hex)) {
+      return ('#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3]).toLowerCase();
+    }
+    return null;
+  }
+
+  function colorToHex(value) {
+    var hex = normalizeHex(value);
+    if (hex) return hex;
+    var match = String(value || '').trim().match(/^rgba?\(([^)]+)\)$/i);
+    if (!match) return null;
+    var parts = match[1].split(',').map(function (x) { return x.trim(); });
+    if (parts.length < 3) return null;
+    var r = parseFloat(parts[0]);
+    var g = parseFloat(parts[1]);
+    var b = parseFloat(parts[2]);
+    if ([r, g, b].some(function (n) { return Number.isNaN(n); })) return null;
+    return '#' + [r, g, b].map(function (n) {
+      var out = Math.max(0, Math.min(255, Math.round(n))).toString(16);
+      return out.length === 1 ? '0' + out : out;
+    }).join('');
+  }
+
+  function parseGradientColors(value) {
+    var regex = /(#[0-9a-fA-F]{3,6}|rgba?\([^\)]+\))/g;
+    var found = [];
+    var match;
+    while ((match = regex.exec(String(value || ''))) !== null) {
+      var raw = match[0];
+      var hex = colorToHex(raw);
+      if (!hex) continue;
+      var alphaMatch = raw.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)$/i);
+      found.push({ raw: raw, hex: hex, alpha: alphaMatch ? alphaMatch[1] : null, index: found.length });
+    }
+    return found;
+  }
+
+  function replaceNthOccurrence(source, target, replacement, n) {
+    var cursor = -1;
+    var from = 0;
+    for (var i = 0; i <= n; i += 1) {
+      cursor = source.indexOf(target, from);
+      if (cursor === -1) return source;
+      from = cursor + target.length;
+    }
+    return source.slice(0, cursor) + replacement + source.slice(cursor + target.length);
+  }
+
+  function captureThemeDefaults(doc) {
+    var root = doc.documentElement;
+    var computed = doc.defaultView.getComputedStyle(root);
+    var output = {};
+
+    tokenSchema.forEach(function (item) {
+      var value = computed.getPropertyValue(item.key).trim();
+      if (item.editor === 'range') {
+        output[item.key] = parseFloat(value) || (item.key === '--font-size-base' ? 16 : 1.6);
+      } else {
+        output[item.key] = value;
+      }
     });
-    return ':root{\n' + lines.join('\n') + '\n}';
+
+    return output;
   }
 
   function normalizeColor(value) {
@@ -155,14 +231,11 @@
     var tokenValues = {};
     tokenSchema.forEach(function (item) {
       var value = state.tokens[item.key];
-      if (item.type === 'range') {
-        tokenValues[item.key] = item.key === '--font-size-base' ? Number(value) + 'px' : String(value);
-      } else {
-        tokenValues[item.key] = value;
-      }
-      if (item.alias) {
-        tokenValues[item.alias] = tokenValues[item.key];
-      }
+      tokenValues[item.key] = item.editor === 'range' && item.key === '--font-size-base'
+        ? Number(value) + 'px'
+        : String(value);
+
+      if (item.alias) tokenValues[item.alias] = tokenValues[item.key];
     });
 
     styleEl.textContent = styleTextMap(tokenValues);
@@ -172,14 +245,82 @@
   function applyTextOverrides() {
     var doc = getPreviewDocument();
     if (!doc) return;
-
     Object.keys(textSelectors).forEach(function (key) {
       var el = doc.querySelector(textSelectors[key]);
       if (!el) return;
-      var value = state.text[key];
-      if (typeof value === 'string') {
-        el.textContent = value;
+      if (typeof state.text[key] === 'string') {
+        el.textContent = state.text[key];
+        return;
       }
+      if (typeof defaultTexts[key] === 'string') {
+        el.textContent = defaultTexts[key];
+      }
+    });
+  }
+
+  function setColorPickerFromText(textInput, colorInput) {
+    var hex = colorToHex(textInput.value);
+    if (hex) {
+      colorInput.value = hex;
+      return true;
+    }
+    return false;
+  }
+
+  function renderGradientPickers(item, textInput, parent) {
+    var swatches = document.createElement('div');
+    swatches.className = 'gradient-pickers';
+
+    var stopStates = parseGradientColors(textInput.value).map(function (entry) {
+      return {
+        index: entry.index,
+        alpha: entry.alpha,
+        currentRaw: entry.raw,
+        currentHex: entry.hex
+      };
+    });
+
+    stopStates.forEach(function (stopState) {
+      var wrap = document.createElement('div');
+      wrap.className = 'gradient-picker-item';
+
+      var label = document.createElement('span');
+      label.textContent = 'Cor ' + String(stopState.index + 1);
+      wrap.appendChild(label);
+
+      var colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = stopState.currentHex;
+      colorInput.title = item.key + ' - ponto ' + String(stopState.index + 1);
+      colorInput.addEventListener('input', function () {
+        var nextColor = colorInput.value;
+        var replacement = stopState.alpha !== null
+          ? 'rgba(' + parseInt(nextColor.slice(1, 3), 16) + ',' + parseInt(nextColor.slice(3, 5), 16) + ',' + parseInt(nextColor.slice(5, 7), 16) + ',' + stopState.alpha + ')'
+          : nextColor;
+
+        var source = String(state.tokens[item.key] || textInput.value || '');
+        var updated = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
+
+        if (updated === source) {
+          var reparsed = parseGradientColors(source);
+          if (reparsed[stopState.index]) {
+            stopState.currentRaw = reparsed[stopState.index].raw;
+            stopState.alpha = reparsed[stopState.index].alpha;
+            updated = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
+          }
+        }
+
+        state.tokens[item.key] = updated;
+        stopState.currentRaw = replacement;
+        stopState.currentHex = nextColor;
+        textInput.value = updated;
+        state.theme = 'custom';
+        refreshThemeButtons();
+        applyTokens();
+      });
+
+      wrap.appendChild(colorInput);
+      swatches.appendChild(wrap);
     });
 
     parent.appendChild(swatches);
@@ -199,22 +340,22 @@
         range.value = state.tokens[item.key];
         if (item.step) range.step = item.step;
 
-        var textInputRange = document.createElement('input');
-        textInputRange.type = 'text';
-        textInputRange.value = String(state.tokens[item.key]);
+        var rangeText = document.createElement('input');
+        rangeText.type = 'text';
+        rangeText.value = String(state.tokens[item.key]);
 
         range.addEventListener('input', function () {
           state.tokens[item.key] = Number(range.value);
-          textInputRange.value = String(state.tokens[item.key]);
+          rangeText.value = String(state.tokens[item.key]);
           state.theme = 'custom';
           refreshThemeButtons();
           applyTokens();
         });
 
-        textInputRange.addEventListener('change', function () {
-          var parsed = parseFloat(textInputRange.value);
+        rangeText.addEventListener('change', function () {
+          var parsed = parseFloat(rangeText.value);
           if (Number.isNaN(parsed)) {
-            textInputRange.value = String(state.tokens[item.key]);
+            rangeText.value = String(state.tokens[item.key]);
             return;
           }
           state.tokens[item.key] = parsed;
@@ -227,7 +368,7 @@
         var rangeRow = document.createElement('div');
         rangeRow.className = 'token-row';
         rangeRow.appendChild(range);
-        rangeRow.appendChild(textInputRange);
+        rangeRow.appendChild(rangeText);
         label.appendChild(rangeRow);
       } else {
         var row = document.createElement('div');
@@ -235,19 +376,31 @@
 
         var textInput = document.createElement('input');
         textInput.type = 'text';
-        textInput.value = state.tokens[item.key];
+        textInput.value = String(state.tokens[item.key] || '');
         row.appendChild(textInput);
 
-        if (item.type === 'color') {
-          var colorInput = document.createElement('input');
+        var isColorFamily = item.editor === 'color' || item.editor === 'gradient';
+        var colorInput;
+        if (isColorFamily) {
+          colorInput = document.createElement('input');
           colorInput.type = 'color';
-          colorInput.value = normalizeColor(state.tokens[item.key]);
+          colorInput.value = colorToHex(textInput.value) || '#000000';
+          colorInput.title = item.key;
           colorInput.addEventListener('input', function () {
-            state.tokens[item.key] = colorInput.value;
-            textInput.value = colorInput.value;
+            if (item.editor === 'gradient') {
+              var first = parseGradientColors(state.tokens[item.key]);
+              if (first.length) {
+                state.tokens[item.key] = replaceNthOccurrence(String(state.tokens[item.key]), first[0].raw, colorInput.value, 0);
+                textInput.value = state.tokens[item.key];
+              }
+            } else {
+              state.tokens[item.key] = colorInput.value;
+              textInput.value = colorInput.value;
+            }
             state.theme = 'custom';
             refreshThemeButtons();
             applyTokens();
+            syncTokenInputs();
           });
           row.appendChild(colorInput);
         }
@@ -259,7 +412,20 @@
           applyTokens();
         });
 
+        textInput.addEventListener('change', function () {
+          if (item.editor === 'color') {
+            var valid = setColorPickerFromText(textInput, colorInput);
+            if (!valid) setStatus('Valor inválido para ' + item.key + '. Use HEX ou RGB/RGBA.');
+          }
+          if (item.editor === 'gradient') {
+            syncTokenInputs();
+          }
+        });
+
         label.appendChild(row);
+        if (item.editor === 'gradient') {
+          renderGradientPickers(item, textInput, label);
+        }
       }
 
       var meta = document.createElement('div');
@@ -273,25 +439,25 @@
   function renderTokenMap() {
     tokenMapEl.innerHTML = '';
     Object.keys(tokenCategoryDescriptions).forEach(function (category) {
-      var wrap = document.createElement('div');
-      wrap.className = 'token-map-group';
+      var block = document.createElement('div');
+      block.className = 'token-map-group';
 
       var title = document.createElement('h3');
       title.textContent = category;
-      wrap.appendChild(title);
+      block.appendChild(title);
 
-      var description = document.createElement('p');
-      description.textContent = tokenCategoryDescriptions[category];
-      wrap.appendChild(description);
+      var desc = document.createElement('p');
+      desc.textContent = tokenCategoryDescriptions[category];
+      block.appendChild(desc);
 
       tokenSchema.forEach(function (item) {
         if (item.category !== category) return;
-        var tokenText = document.createElement('p');
-        tokenText.textContent = item.key + ' — ' + item.label + '. Uso: ' + item.usage + '.';
-        wrap.appendChild(tokenText);
+        var text = document.createElement('p');
+        text.textContent = item.key + ' — ' + item.label + '. Uso: ' + item.usage + '.';
+        block.appendChild(text);
       });
 
-      tokenMapEl.appendChild(wrap);
+      tokenMapEl.appendChild(block);
     });
   }
 
@@ -303,9 +469,7 @@
   function syncTextInputs() {
     document.querySelectorAll('[data-text-key]').forEach(function (input) {
       var key = input.getAttribute('data-text-key');
-      var fallback = defaultTexts[key] || '';
-      var value = typeof state.text[key] === 'string' ? state.text[key] : fallback;
-      input.value = value;
+      input.value = typeof state.text[key] === 'string' ? state.text[key] : (defaultTexts[key] || '');
     });
   }
 
@@ -331,18 +495,17 @@
     });
     exportTokens['--amber'] = exportTokens['--accent'];
 
-    var cssBlock = styleTextMap(exportTokens);
+    var css = styleTextMap(exportTokens);
     if (state.selectorOverrides.length) {
-      cssBlock += '\n\n/* Sugestões de overrides por seletor (preview) */\n';
+      css += '\n\n/* Sugestões de overrides por seletor (preview) */\n';
       state.selectorOverrides.forEach(function (override) {
-        cssBlock += '/* ' + override.selector + ' => ' + override.note + ' */\n';
+        css += '/* ' + override.selector + ' => ' + override.note + ' */\n';
       });
     }
-    outputEl.value = cssBlock;
+    outputEl.value = css;
   }
 
   function copyText(value, successMessage) {
-    var copied = false;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(value).then(function () {
         setStatus(successMessage);
@@ -351,10 +514,7 @@
       });
       return;
     }
-    copied = fallbackCopy(value, successMessage);
-    if (!copied) {
-      setStatus('Não foi possível copiar automaticamente.');
-    }
+    fallbackCopy(value, successMessage);
   }
 
   function fallbackCopy(value, successMessage) {
@@ -365,17 +525,13 @@
     helper.style.left = '-9999px';
     document.body.appendChild(helper);
     helper.select();
-    var copied = false;
     try {
-      copied = document.execCommand('copy');
-      if (copied) {
-        setStatus(successMessage);
-      }
+      document.execCommand('copy');
+      setStatus(successMessage);
     } catch (error) {
-      copied = false;
+      setStatus('Não foi possível copiar automaticamente.');
     }
     document.body.removeChild(helper);
-    return copied;
   }
 
   function saveLocal() {
@@ -391,19 +547,50 @@
     }
   }
 
+  function normalizeLoadedState(parsed) {
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    var normalized = {
+      theme: typeof parsed.theme === 'string' ? parsed.theme : 'dark',
+      tokens: (parsed.tokens && typeof parsed.tokens === 'object') ? parsed.tokens : {},
+      text: (parsed.text && typeof parsed.text === 'object') ? parsed.text : {},
+      textLog: Array.isArray(parsed.textLog) ? parsed.textLog : [],
+      selectorOverrides: Array.isArray(parsed.selectorOverrides) ? parsed.selectorOverrides : [],
+      pickerActive: false,
+      inlineEditActive: false
+    };
+
+    return normalized;
+  }
+
+  function applyLoadedState(parsed) {
+    var normalized = normalizeLoadedState(parsed);
+    if (!normalized) return false;
+
+    state.theme = normalized.theme;
+    state.tokens = normalized.tokens;
+    state.text = normalized.text;
+    state.textLog = normalized.textLog;
+    state.selectorOverrides = normalized.selectorOverrides;
+    state.pickerActive = false;
+    state.inlineEditActive = false;
+    return true;
+  }
+
   function loadLocal() {
     if (!canUseStorage()) return;
     try {
       var raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      var parsed = JSON.parse(raw);
-      if (parsed && parsed.tokens && parsed.text) {
-        state.theme = parsed.theme || 'dark';
-        state.tokens = parsed.tokens;
-        state.text = parsed.text;
-        state.textLog = Array.isArray(parsed.textLog) ? parsed.textLog : [];
-        state.selectorOverrides = Array.isArray(parsed.selectorOverrides) ? parsed.selectorOverrides : [];
+      if (!raw) {
+        raw = window.localStorage.getItem(LEGACY_STORAGE_KEY);
       }
+      if (!raw) {
+        raw = window.localStorage.getItem(LEGACY_STORAGE_KEY_V1);
+      }
+      if (!raw) return;
+
+      var parsed = JSON.parse(raw);
+      applyLoadedState(parsed);
     } catch (error) {
       setStatus('Estado local inválido, a usar defaults.');
     }
@@ -428,14 +615,6 @@
     applyTextOverrides();
   }
 
-  function getElementSignature(el) {
-    if (!el) return '';
-    var tag = el.tagName.toLowerCase();
-    var id = el.id ? '#' + el.id : '';
-    var classes = el.classList.length ? '.' + Array.prototype.join.call(el.classList, '.') : '';
-    return tag + id + classes;
-  }
-
   function cssEscape(value) {
     if (window.CSS && window.CSS.escape) return window.CSS.escape(value);
     return String(value).replace(/([^a-zA-Z0-9_-])/g, '\\$1');
@@ -451,20 +630,20 @@
       var part = current.tagName.toLowerCase();
       if (current.classList.length) {
         part += '.' + Array.prototype.map.call(current.classList, cssEscape).join('.');
-      } else {
-        var index = 1;
-        var sibling = current.previousElementSibling;
-        while (sibling) {
-          if (sibling.tagName === current.tagName) index += 1;
-          sibling = sibling.previousElementSibling;
-        }
-        part += ':nth-of-type(' + index + ')';
       }
       parts.unshift(part);
       current = current.parentElement;
       if (parts.length >= 4) break;
     }
     return parts.join(' > ');
+  }
+
+  function getElementSignature(el) {
+    if (!el) return '';
+    var tag = el.tagName.toLowerCase();
+    var id = el.id ? '#' + el.id : '';
+    var classes = el.classList.length ? '.' + Array.prototype.join.call(el.classList, '.') : '';
+    return tag + id + classes;
   }
 
   function getBreadcrumb(el) {
@@ -487,37 +666,28 @@
       return;
     }
 
-    selectedElement = el;
     selectedSelector = getCssSelector(el);
     selectionNameEl.textContent = getElementSignature(el);
     selectionPathEl.textContent = 'Caminho: ' + getBreadcrumb(el);
+    copySelectorButton.disabled = false;
 
     var doc = getPreviewDocument();
     if (!doc) return;
     var computed = doc.defaultView.getComputedStyle(el);
-    selectionStylesEl.innerHTML = '';
 
-    [
-      { label: 'color', value: computed.color },
-      { label: 'background-color', value: computed.backgroundColor },
-      { label: 'font-size', value: computed.fontSize },
-      { label: 'font-weight', value: computed.fontWeight },
-      { label: 'line-height', value: computed.lineHeight }
-    ].forEach(function (item) {
+    selectionStylesEl.innerHTML = '';
+    ['color', 'background-color', 'font-size', 'font-weight', 'line-height'].forEach(function (prop) {
       var row = document.createElement('div');
-      row.textContent = item.label + ': ' + item.value;
+      row.textContent = prop + ': ' + computed.getPropertyValue(prop);
       selectionStylesEl.appendChild(row);
     });
-
-    copySelectorButton.disabled = false;
   }
 
   function ensureRuntimeStyles(doc) {
-    var styleEl = doc.getElementById('studio-runtime-style');
-    if (styleEl) return;
-    styleEl = doc.createElement('style');
+    if (doc.getElementById('studio-runtime-style')) return;
+    var styleEl = doc.createElement('style');
     styleEl.id = 'studio-runtime-style';
-    styleEl.textContent = '.studio-selected-element{outline:2px dashed #ffb000 !important; outline-offset:2px; cursor:crosshair !important;}\n.studio-editable-element{outline:1px dotted rgba(255,176,0,.55); outline-offset:2px;}';
+    styleEl.textContent = '.studio-selected-element{outline:2px dashed #ffb000 !important;outline-offset:2px;cursor:crosshair !important;}\n.studio-editable-element{outline:1px dotted rgba(255,176,0,.55);outline-offset:2px;}';
     doc.head.appendChild(styleEl);
   }
 
@@ -533,10 +703,10 @@
 
     var doc = getPreviewDocument();
     if (!doc) return;
-    var target = event.target;
+
     clearSelectionHighlight(doc);
-    target.classList.add('studio-selected-element');
-    updateSelectionPanel(target);
+    event.target.classList.add('studio-selected-element');
+    updateSelectionPanel(event.target);
     setStatus('Elemento selecionado no preview.');
   }
 
@@ -549,13 +719,12 @@
 
   function registerTextLog(el, beforeText, afterText) {
     if (beforeText === afterText) return;
-    var entry = {
+    state.textLog.unshift({
       timestamp: new Date().toISOString(),
       selector: getCssSelector(el),
       before: beforeText,
       after: afterText
-    };
-    state.textLog.unshift(entry);
+    });
     renderTextLog();
   }
 
@@ -565,17 +734,14 @@
     target.setAttribute('data-before-edit', target.textContent);
   }
 
-  function finishEditable(target) {
-    if (!target || !isEditableElement(target)) return;
+  function handleEditableBlur(event) {
+    var target = event.target;
+    if (!isEditableElement(target)) return;
     var before = target.getAttribute('data-before-edit') || '';
     var after = target.textContent;
     target.removeAttribute('data-before-edit');
     registerTextLog(target, before, after);
     setStatus('Texto atualizado no preview (runtime).');
-  }
-
-  function handleEditableBlur(event) {
-    finishEditable(event.target);
   }
 
   function handleEditableKeydown(event) {
@@ -589,6 +755,7 @@
   function toggleInlineEditing(forceValue) {
     var doc = getPreviewDocument();
     if (!doc) return;
+
     var enabled = typeof forceValue === 'boolean' ? forceValue : !state.inlineEditActive;
     state.inlineEditActive = enabled;
     inlineEditButton.textContent = enabled ? 'Terminar edição' : 'Editar texto';
@@ -627,9 +794,9 @@
     }
 
     state.textLog.forEach(function (entry) {
-      var item = document.createElement('li');
-      item.textContent = '[' + entry.timestamp + '] ' + entry.selector + ' | "' + entry.before + '" → "' + entry.after + '"';
-      textLogEl.appendChild(item);
+      var li = document.createElement('li');
+      li.textContent = '[' + entry.timestamp + '] ' + entry.selector + ' | "' + entry.before + '" → "' + entry.after + '"';
+      textLogEl.appendChild(li);
     });
   }
 
@@ -637,7 +804,6 @@
     var doc = getPreviewDocument();
     if (!doc) return;
     ensureRuntimeStyles(doc);
-
     doc.addEventListener('click', handlePickerClick, true);
     doc.addEventListener('focusin', handleEditableFocus, true);
     doc.addEventListener('blur', handleEditableBlur, true);

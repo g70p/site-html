@@ -2104,3 +2104,54 @@ html[data-theme="light"] .site-header.scrolled {
 html[data-theme="light"] {
   --footer-text: color-mix(in srgb, #ffffff 78%, transparent);
 }
+
+/* Token normalization bridge: footer + key UI surfaces/texts (incremental) */
+:root {
+  --footer-bg: rgba(0,0,0,.6);
+  --footer-text: color-mix(in srgb, var(--text) 58%, transparent);
+  --header-nav-text: color-mix(in srgb, var(--text) 82%, transparent);
+  --card-overlay-bg: rgba(0,0,0,.35);
+  --btn-soft-bg: rgba(255,255,255,.02);
+  --overlay-soft-accent: rgba(255,176,0,.10);
+}
+
+.site-footer {
+  background: var(--footer-bg);
+}
+
+.site-footer .footer-left .muted,
+.site-footer .muted,
+.site-footer small,
+.site-footer .small,
+.site-footer .copyright {
+  color: var(--footer-text) !important;
+  opacity: 1;
+}
+
+.site-header .nav a,
+.site-header .nav .nav-sub,
+.site-header .nav .nav-label {
+  color: var(--header-nav-text);
+}
+
+.btn-ghost {
+  background: var(--btn-soft-bg);
+}
+
+.pre,
+.panel-box {
+  background: var(--card-overlay-bg);
+}
+
+.media-overlay {
+  background: var(--overlay-soft-accent);
+}
+
+html[data-theme="light"] {
+  --footer-bg: rgba(0, 0, 0, 0.91);
+  --footer-text: rgba(255,255,255,.78);
+  --header-nav-text: #e1e5ec;
+  --card-overlay-bg: rgba(0, 0, 0, .28);
+  --btn-soft-bg: rgba(255,255,255,.04);
+  --overlay-soft-accent: rgba(255,176,0,.10);
+}
