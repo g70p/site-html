@@ -38,6 +38,86 @@
         <p id="selection-name" class="studio-inline-note">Nenhum elemento selecionado.</p>
         <p id="selection-path" class="studio-inline-note">Caminho: —</p>
         <div id="selection-styles" class="selection-styles"></div>
+
+        <div id="selection-editor" class="selection-editor" aria-live="polite">
+          <div class="selection-block">
+            <h3>Conteúdo</h3>
+            <div id="content-fields" class="selection-fields"></div>
+            <div class="actions-row">
+              <button type="button" id="apply-content" disabled>Aplicar conteúdo</button>
+            </div>
+          </div>
+
+          <div class="selection-block">
+            <h3>Estilos</h3>
+            <div class="style-grid">
+              <label class="style-field">
+                <span>color</span>
+                <div class="style-color-row">
+                  <input type="color" id="style-color-picker" value="#ffffff" />
+                  <input type="text" id="style-color" placeholder="ex.: #ffffff ou rgb(...)" />
+                </div>
+              </label>
+
+              <label class="style-field">
+                <span>background-color</span>
+                <div class="style-color-row">
+                  <input type="color" id="style-bg-picker" value="#000000" />
+                  <input type="text" id="style-bg" placeholder="ex.: transparent, #000000, rgb(...)" />
+                </div>
+              </label>
+
+              <label class="style-field">
+                <span>font-size</span>
+                <input type="text" id="style-font-size" placeholder="ex.: 16px" />
+              </label>
+
+              <label class="style-field">
+                <span>font-weight</span>
+                <select id="style-font-weight">
+                  <option value="">—</option>
+                  <option value="300">300</option>
+                  <option value="400">400</option>
+                  <option value="500">500</option>
+                  <option value="600">600</option>
+                  <option value="700">700</option>
+                  <option value="800">800</option>
+                </select>
+              </label>
+
+              <label class="style-field">
+                <span>line-height</span>
+                <input type="text" id="style-line-height" placeholder="ex.: 1.4 ou 22px" />
+              </label>
+
+              <label class="style-field">
+                <span>padding</span>
+                <input type="text" id="style-padding" placeholder="ex.: 8px 12px" />
+              </label>
+
+              <label class="style-field">
+                <span>border-radius</span>
+                <input type="text" id="style-radius" placeholder="ex.: 10px" />
+              </label>
+            </div>
+
+            <div class="actions-row">
+              <button type="button" id="apply-style" disabled>Aplicar estilos</button>
+              <button type="button" id="revert-style" disabled>Reverter estilos</button>
+            </div>
+          </div>
+
+          <div class="selection-block">
+            <h3>Patch</h3>
+            <div class="actions-row">
+              <button type="button" id="export-patch">Exportar studio-patch.css</button>
+              <button type="button" id="copy-patch">Copiar patch</button>
+              <button type="button" id="reset-patch">Reset patch</button>
+            </div>
+            <p id="patch-status" class="studio-inline-note">Patch: —</p>
+          </div>
+        </div>
+
       </section>
 
       <section class="studio-group">
