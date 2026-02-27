@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Studio Webmaster | ResiGrip</title>
-  <meta name="description" content="Área interna para pré-visualização de tokens e texto em runtime." />
+  <meta name="description" content="Ambiente interno para testar tokens e conteúdos sem alterar ficheiros de produção." />
   <meta name="robots" content="noindex,nofollow" />
   <link rel="stylesheet" href="styles-studio.css" />
   <script src="script-studio.js" defer></script>
@@ -12,7 +12,33 @@
 <body>
   <main id="studio-app" class="studio-app" hidden>
     <aside class="studio-panel" aria-label="Painel Studio">
-      <h1>Studio</h1>
+      <header class="studio-panel-header">
+        <h1>WEBMASTER STUDIO</h1>
+        <p>Ambiente de testes (não público).</p>
+      </header>
+
+      <section class="studio-group studio-path-guide" aria-label="Caminho de edição de dados">
+        <h2>Caminho para edição de dados</h2>
+        <p>Aceder por URL: <code>/studio.html?mode=webmaster</code></p>
+        <p>Edição de texto: botão <strong>Editar texto</strong> → clicar no conteúdo no preview.</p>
+        <p>Edição de tokens: secção <strong>Tokens</strong> (campo manual + seletor de cor).</p>
+      </section>
+
+      <section class="studio-group">
+        <h2>Modos</h2>
+        <div class="actions-row">
+          <button type="button" id="toggle-picker">Ativar seleção</button>
+          <button type="button" id="toggle-inline-edit">Editar texto</button>
+          <button type="button" id="copy-selector" disabled>Copiar seletor CSS</button>
+        </div>
+      </section>
+
+      <section class="studio-group">
+        <h2>Elemento selecionado</h2>
+        <p id="selection-name" class="studio-inline-note">Nenhum elemento selecionado.</p>
+        <p id="selection-path" class="studio-inline-note">Caminho: —</p>
+        <div id="selection-styles" class="selection-styles"></div>
+      </section>
 
       <section class="studio-group">
         <h2>Tema</h2>
@@ -28,11 +54,31 @@
       </section>
 
       <section class="studio-group">
+        <div class="actions-row">
+          <button type="button" id="toggle-token-help">Mostrar ajuda de tokens</button>
+        </div>
+        <div class="token-help" id="token-help" hidden>
+          <h2>Mapa de tokens</h2>
+          <div id="token-map"></div>
+        </div>
+      </section>
+
+      <section class="studio-group">
         <h2>Texto (preview)</h2>
         <label>Headline hero<input type="text" data-text-key="heroHeadline" /></label>
         <label>Subheadline<input type="text" data-text-key="heroSubheadline" /></label>
         <label>Sobre<input type="text" data-text-key="sobreText" /></label>
         <label>CTA principal<input type="text" data-text-key="heroCta" /></label>
+        <label>Texto footer/copyright<input type="text" data-text-key="footerCopyright" /></label>
+      </section>
+
+      <section class="studio-group">
+        <h2>LOG de texto</h2>
+        <div class="actions-row">
+          <button type="button" id="copy-log">Copiar LOG</button>
+          <button type="button" id="clear-log">Limpar LOG</button>
+        </div>
+        <ul id="text-log" class="log-list"></ul>
       </section>
 
       <section class="studio-group">
@@ -54,7 +100,7 @@
       <p id="studio-status" class="studio-status" aria-live="polite"></p>
     </aside>
 
-    <section class="studio-preview">
+    <section class="studio-preview" aria-label="Preview runtime do site">
       <iframe id="site-preview" title="Preview do site" src="index.html"></iframe>
     </section>
   </main>
