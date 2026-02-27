@@ -129,7 +129,6 @@
     selectorOverrides: [],
     pickerActive: false,
     inlineEditActive: false,
-      stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
     stylePatch: {}
   };
 
@@ -596,7 +595,6 @@
       pickerActive: false,
       inlineEditActive: false,
       stylePatch: (parsed.stylePatch && typeof parsed.stylePatch === 'object') ? parsed.stylePatch : {},
-    stylePatch: {}
     };
 
     return normalized;
