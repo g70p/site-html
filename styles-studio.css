@@ -230,3 +230,25 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 [hidden] {
   display: none !important;
 }
+
+.gradient-pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  margin-top: .35rem;
+}
+
+.gradient-picker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  border: 1px solid var(--studio-border);
+  border-radius: 8px;
+  padding: .25rem .35rem;
+  background: #111827;
+}
+
+.gradient-picker-item span {
+  font-size: .72rem;
+  color: var(--studio-muted);
+}
