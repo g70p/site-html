@@ -78,6 +78,7 @@
     heroCta: '.hero-actions .btn-primary',
     footerCopyright: '.site-footer .muted'
   };
+
   var defaultTexts = {};
   var selectedElement = null;
   var selectedSelector = '';
@@ -129,17 +130,16 @@
   function captureThemeDefaults(doc) {
     var root = doc.documentElement;
     var computed = doc.defaultView.getComputedStyle(root);
-    var out = {};
+    var output = {};
+
     tokenSchema.forEach(function (item) {
       var value = computed.getPropertyValue(item.key).trim();
       if (item.type === 'range') {
         out[item.key] = parseFloat(value) || (item.key === '--font-size-base' ? 16 : 1.6);
       } else {
-        out[item.key] = value;
+        output[item.key] = value;
       }
     });
-    return out;
-  }
 
   function applyTokens() {
     var doc = getPreviewDocument();
@@ -181,6 +181,8 @@
         el.textContent = value;
       }
     });
+
+    parent.appendChild(swatches);
   }
 
   function renderTokenControls() {
@@ -189,7 +191,7 @@
       label.textContent = item.label;
       label.title = 'Onde é usado: ' + item.usage;
 
-      if (item.type === 'range') {
+      if (item.editor === 'range') {
         var range = document.createElement('input');
         range.type = 'range';
         range.min = item.min;
@@ -325,11 +327,7 @@
 
     var exportTokens = {};
     Object.keys(state.tokens).forEach(function (key) {
-      if (key === '--font-size-base') {
-        exportTokens[key] = state.tokens[key] + 'px';
-      } else {
-        exportTokens[key] = String(state.tokens[key]);
-      }
+      exportTokens[key] = key === '--font-size-base' ? state.tokens[key] + 'px' : String(state.tokens[key]);
     });
     exportTokens['--amber'] = exportTokens['--accent'];
 
