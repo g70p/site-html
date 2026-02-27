@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Studio Webmaster | ResiGrip</title>
+  <meta name="description" content="Área interna para pré-visualização de tokens e texto em runtime." />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="stylesheet" href="styles-studio.css" />
+  <script src="script-studio.js" defer></script>
+</head>
+<body>
+  <main id="studio-app" class="studio-app" hidden>
+    <aside class="studio-panel" aria-label="Painel Studio">
+      <h1>Studio</h1>
+
+      <section class="studio-group">
+        <h2>Tema</h2>
+        <div class="theme-actions">
+          <button type="button" data-theme="dark">Dark</button>
+          <button type="button" data-theme="light">Light</button>
+          <button type="button" data-theme="custom">Custom</button>
+        </div>
+      </section>
+
+      <section class="studio-group" id="token-controls">
+        <h2>Tokens</h2>
+      </section>
+
+      <section class="studio-group">
+        <h2>Texto (preview)</h2>
+        <label>Headline hero<input type="text" data-text-key="heroHeadline" /></label>
+        <label>Subheadline<input type="text" data-text-key="heroSubheadline" /></label>
+        <label>Sobre<input type="text" data-text-key="sobreText" /></label>
+        <label>CTA principal<input type="text" data-text-key="heroCta" /></label>
+      </section>
+
+      <section class="studio-group">
+        <h2>Exportação</h2>
+        <div class="actions-row">
+          <button type="button" id="copy-css">Copiar CSS variables</button>
+          <button type="button" id="copy-json">Copiar JSON preset</button>
+        </div>
+        <textarea id="studio-output" rows="10" readonly aria-label="Exportação"></textarea>
+      </section>
+
+      <section class="studio-group">
+        <h2>Persistência</h2>
+        <div class="actions-row">
+          <button type="button" id="save-local">Guardar preset local</button>
+          <button type="button" id="reset-defaults">Repor defaults</button>
+        </div>
+      </section>
+      <p id="studio-status" class="studio-status" aria-live="polite"></p>
+    </aside>
+
+    <section class="studio-preview">
+      <iframe id="site-preview" title="Preview do site" src="index.html"></iframe>
+    </section>
+  </main>
+
+  <p id="restricted" class="restricted">Área restrita.</p>
+</body>
+</html>
