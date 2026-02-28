@@ -147,6 +147,28 @@
     hideCookie();
   });
 
+  // FAQ accordion
+  qsa('.faq-q').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const answer = item?.querySelector('.faq-a');
+      if (!answer) return;
+
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+      // fecha outros (modo "um de cada vez")
+      qsa('.faq-q[aria-expanded="true"]').forEach((other) => {
+        if (other === btn) return;
+        other.setAttribute('aria-expanded', 'false');
+        const otherAns = other.closest('.faq-item')?.querySelector('.faq-a');
+        if (otherAns) otherAns.hidden = true;
+      });
+
+      btn.setAttribute('aria-expanded', String(!isOpen));
+      answer.hidden = isOpen;
+    });
+  });
+
   // Contact form (static): validate endpoint configured
   const form = qs('#contactForm');
   const statusEl = qs('#formStatus');
