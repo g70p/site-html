@@ -335,17 +335,16 @@
           : nextColor;
 
         var source = String(state.tokens[item.key] || textInput.value || '');
+        var updated = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
 
-        // Reinterpretar stops a cada alteração para manter o índice correto mesmo após edição manual.
-        var reparsed = parseGradientColors(source);
-        var rawAtIndex = reparsed[stopState.index] ? reparsed[stopState.index].raw : stopState.currentRaw;
-        var alphaAtIndex = reparsed[stopState.index] ? reparsed[stopState.index].alpha : stopState.alpha;
-
-        stopState.currentRaw = rawAtIndex;
-        stopState.alpha = alphaAtIndex;
-
-        // Substituir a ocorrência N do valor (em caso de cores repetidas).
-        var updated = replaceNthOccurrence(source, rawAtIndex, replacement, stopState.index);
+        if (updated === source) {
+          var reparsed = parseGradientColors(source);
+          if (reparsed[stopState.index]) {
+            stopState.currentRaw = reparsed[stopState.index].raw;
+            stopState.alpha = reparsed[stopState.index].alpha;
+            updated = replaceNthOccurrence(source, stopState.currentRaw, replacement, 0);
+          }
+        }
 
         state.tokens[item.key] = updated;
         stopState.currentRaw = replacement;
@@ -1125,16 +1124,10 @@ function handlePickerMove(event) {
     var doc = getPreviewDocument();
     if (!doc) return;
 
-    // Normalizar alvo: cliques em texto podem ter target como Text node.
-    var target = event.target;
-    if (target && target.nodeType !== 1) {
-      target = target.parentElement;
-    }
-    if (!target || target.nodeType !== 1) return;
-
     clearSelectionHighlight(doc);
-    target.classList.add('studio-selected-element');
-    updateSelectionPanel(target);
+    clearHoverHighlight(doc);
+    event.target.classList.add('studio-selected-element');
+    updateSelectionPanel(event.target);
     setStatus('Elemento selecionado no preview.');
   }
 
@@ -1205,11 +1198,6 @@ function handlePreviewKeydown(event) {
     inlineEditButton.textContent = enabled ? 'Terminar edição' : 'Editar texto';
     inlineEditButton.classList.toggle('is-active', enabled);
 
-    // Evitar conflito de UX: editar texto e selecionar por clique ao mesmo tempo.
-    if (enabled && state.pickerActive) {
-      togglePicker(false);
-    }
-
     var candidates = doc.body ? doc.body.querySelectorAll('p,h1,h2,h3,h4,h5,h6,a,button,li,small,span,div') : [];
     Array.prototype.forEach.call(candidates, function (el) {
       if (!isEditableElement(el)) return;
@@ -1232,9 +1220,9 @@ function togglePicker(forceValue) {
     pickerButton.textContent = enabled ? 'Desativar seleção' : 'Ativar seleção';
     pickerButton.classList.toggle('is-active', enabled);
 
-    // Evitar conflito de UX: seleção por clique bloqueia cliques normais (inclui foco para editar).
-    if (enabled && state.inlineEditActive) {
-      toggleInlineEditing(false);
+    var doc = getPreviewDocument();
+    if (doc && !enabled) {
+      clearHoverHighlight(doc);
     }
 
     setStatus(enabled ? 'Seleção por clique ativa.' : 'Seleção por clique desativada.');
@@ -1338,12 +1326,36 @@ function togglePicker(forceValue) {
     setStatus('Defaults repostos.');
   });
 
-  iframe.addEventListener('load', function () {
+  exportPatchButton.addEventListener('click', function () {
+    var cssText = buildPatchCss(state.stylePatch);
+    downloadTextFile('studio-patch.css', cssText);
+    setStatus('Patch exportado (download).');
+  });
+
+  copyPatchButton.addEventListener('click', function () {
+    var cssText = buildPatchCss(state.stylePatch);
+    copyToClipboard(cssText).then(function () {
+      setStatus('Patch copiado para a área de transferência.');
+    });
+  });
+
+  resetPatchButton.addEventListener('click', function () {
+    resetPatch();
+    updateSelectionPanel(null);
+    setStatus('Patch resetado (apenas local).');
+  });
+
+  var studioBootstrapped = false;
+
+  function initStudioFromPreview() {
+    if (studioBootstrapped) return;
     var doc = getPreviewDocument();
-    if (!doc) {
+    if (!doc || !doc.documentElement || !doc.body) {
       setStatus('Preview bloqueado por política de origem.');
       return;
     }
+
+    studioBootstrapped = true;
 
     doc.documentElement.setAttribute('data-theme', 'dark');
     defaultsByTheme.dark = captureThemeDefaults(doc);
@@ -1379,5 +1391,33 @@ function togglePicker(forceValue) {
     togglePicker(false);
     toggleInlineEditing(false);
     setStatus('WEBMASTER STUDIO ativo em runtime. Sem alterações em ficheiros do site.');
-  });
+  }
+
+  iframe.addEventListener('load', initStudioFromPreview);
+
+  if (iframe && iframe.contentDocument && iframe.contentDocument.readyState === 'complete') {
+    initStudioFromPreview();
+  }
+
+
+// Atalhos tipo DevTools
+window.addEventListener('keydown', function (event) {
+  var key = String(event.key || '').toLowerCase();
+
+  // Ctrl+Shift+C => modo seleção (picker)
+  if (event.ctrlKey && event.shiftKey && key === 'c') {
+    event.preventDefault();
+    toggleInlineEditing(false);
+    togglePicker(true);
+    return;
+  }
+
+  // Esc => sair de seleção/edição
+  if (key === 'escape') {
+    togglePicker(false);
+    toggleInlineEditing(false);
+    return;
+  }
+}, true);
+
 })();
